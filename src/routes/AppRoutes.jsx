@@ -6,6 +6,7 @@ import AdminOrders from '../pages/admin/AdminOrders';
 import AdminRegister from '../pages/admin/AdminRegister';
 import AdminLayout from '../layouts/AdminLayout'; 
 import AdminWhatsapp from '../pages/admin/AdminWhatsapp';
+import AdminSupplies from '../pages/admin/AdminSupplies';
 import { useAuth } from '../contexts/AuthContext';
 
 export default function AppRoutes() {
@@ -17,11 +18,12 @@ export default function AppRoutes() {
 
       <Route
         path="/admin"
-        element={role === 'administrador' ? <AdminLayout /> : <Navigate to="/login" />}
+        element={role === 'administrator' ? <AdminLayout /> : <Navigate to="/login" />}
       >
         <Route path="orders" element={<AdminOrders />} />
         <Route path="register" element={<AdminRegister />} />
         <Route path="whatsapp" element={<AdminWhatsapp />} />
+        <Route path="supplies" element={<AdminSupplies />} />
       </Route>
 
       <Route

@@ -11,6 +11,7 @@ export default function Sidebar() {
     { key: 'orders', nome: 'Pedidos', icone: 'fa-chart-line' },
     { key: 'register', nome: 'Funcionários', icone: 'fa-users' },
     { key: 'whatsapp', nome: 'Whatsapp', icone: 'fa-brands fa-whatsapp' },
+    { key: 'supplies', nome: 'Insumos', icone: 'fa-circle-info' },
   ];
 
 
