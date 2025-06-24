@@ -23,15 +23,16 @@ export default function LoginPage() {
 
             const data = await res.json();
 
-            if (data.sucess) {
+            if (data.success) {
                 login(data.role);
-                if (data.role === 'admin') navigate('/admin');
+                if (data.role === 'administrador') navigate('/admin/orders');
                 else if (data.role === 'pedidos') navigate('/pedidos');
                 else if (data.role === 'portaria') navigate('/portaria');
             } else {
                 setError(data.message || 'Usuário ou senha inválidos');
             }
-        } catch {
+        } catch (error) {
+            console.log('Erro no fetch:', error);
             setError('Erro na conexão com o servidor.');
         }
     };

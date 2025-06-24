@@ -1,8 +1,8 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Login from '../pages/Login';
-import AdminLayout from '../layout/AdminLayout';
 import Pedidos from '../pages/Pedidos';
 import Portaria from '../pages/Portaria';
+import AdminOrders from '../pages/admin/AdminOrders';
 import { useAuth } from '../contexts/AuthContext';
 
 export default function AppRoutes() {
@@ -12,12 +12,12 @@ export default function AppRoutes() {
     <Routes>
       <Route
         path="/login"
-        element={role ? <Navigate to={`/${role}`} /> : <Login />}
+        element={<Login />}
       />
 
       <Route
-        path="/admin/*"
-        element={role === 'admin' ? <AdminLayout /> : <Navigate to="/login" />}
+        path="/admin/orders"
+        element={role === 'administrador' ? <AdminOrders /> : <Navigate to="/login" />}
       />
 
       <Route
