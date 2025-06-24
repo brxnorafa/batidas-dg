@@ -7,6 +7,8 @@ import AdminRegister from '../pages/admin/AdminRegister';
 import AdminLayout from '../layouts/AdminLayout'; 
 import AdminWhatsapp from '../pages/admin/AdminWhatsapp';
 import AdminSupplies from '../pages/admin/AdminSupplies';
+import AdminStock from '../pages/admin/AdminStock';
+import AdminProducts from '../pages/admin/AdminProducts';
 import { useAuth } from '../contexts/AuthContext';
 
 export default function AppRoutes() {
@@ -24,6 +26,8 @@ export default function AppRoutes() {
         <Route path="register" element={<AdminRegister />} />
         <Route path="whatsapp" element={<AdminWhatsapp />} />
         <Route path="supplies" element={<AdminSupplies />} />
+        <Route path="stock" element={<AdminStock />} />
+        <Route path="products" element={<AdminProducts />} />
       </Route>
 
       <Route
