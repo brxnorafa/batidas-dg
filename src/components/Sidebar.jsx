@@ -8,7 +8,9 @@ export default function Sidebar() {
   const { logout } = useAuth();
 
   const modulos = [
-    { key: 'pedidos', nome: 'Pedidos', icone: 'fa-chart-line' },
+    { key: 'orders', nome: 'Pedidos', icone: 'fa-chart-line' },
+    { key: 'register', nome: 'Funcionários', icone: 'fa-users' },
+    { key: 'whatsapp', nome: 'Whatsapp', icone: 'fa-brands fa-whatsapp' },
   ];
 
 

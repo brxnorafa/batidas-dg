@@ -4,53 +4,67 @@ export default function AdminOrders() {
   const [pedidos, setPedidos] = useState([]);
   const [status, setStatus] = useState('');
 
-  const mockPedidos = [
-    {
-      id: 1,
-      created_at: new Date().toISOString(),
-      nome_cliente: 'João da Silva',
-      status: 'Em andamento',
-      itens: [
-        { id: 101, nome: 'Caipirinha de Limão', quantidade: 2 },
-        { id: 102, nome: 'Batida de Maracujá', quantidade: 1 },
-      ],
-    },
-    {
-      id: 2,
-      created_at: new Date().toISOString(),
-      nome_cliente: 'Maria Oliveira',
-      status: 'Pendente',
-      itens: [
-        { id: 103, nome: 'Batida de Morango', quantidade: 3 },
-      ],
-    },
-  ];
+  const fetchOrders = async () => {
+    try {
+      const res = await fetch('/php/orders/orders.php');
+      const data = await res.json();
+      if (data.success) {
+        setPedidos(data.orders);
+        setStatus(`Atualizado em ${new Date().toLocaleString()}`);
+      } else {
+        setStatus('Erro ao buscar pedidos');
+      }
+    } catch (err) {
+      console.error(err);
+      setStatus('Erro ao conectar com servidor');
+    }
+  };
 
   useEffect(() => {
-    setPedidos(mockPedidos);
-    setStatus(`Pedidos carregados em ${new Date().toLocaleString()}`);
+    fetchOrders();
+    const interval = setInterval(fetchOrders, 10000);
+    return () => clearInterval(interval);
   }, []);
 
-  const finalizarPedido = (id) => {
-    alert(`Pedido #${id} finalizado.`);
+  const handleOrderAction = async (id, action) => {
+    if (!window.confirm(`${action === 'finish' ? 'Finalizar' : 'Cancelar'} pedido #${id}?`)) return;
+
+    try {
+      const res = await fetch('/php/orders/orders.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({ order_id: id, action }),
+      });
+      const data = await res.json();
+      alert(data.message);
+    } catch (err) {
+      console.error(err);
+      alert('Erro ao processar pedido');
+    }
+  }
+
+  const handleMassAction = async (action) => {
+    if (!window.confirm(`Tem certeza que deseja ${action === 'finish_all' ? 'FINALIZAR' : 'CANCELAR'} TODOS os pedidos?`)) return;
+
+    try {
+      const res = await fetch('/php/orders/orders.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({ action }),
+      });
+      const data = await res.json();
+      alert(data.message);
+    } catch (err) {
+      console.error(err);
+      alert('Erro ao processar ação em massa');
+    }
   };
 
-  const cancelarPedido = (id) => {
-    alert(`Pedido #${id} cancelado.`);
-  };
-
-  const finalizarTodos = () => {
-    alert(`Todos os pedidos finalizados.`);
-  };
-
-  const cancelarTodos = () => {
-    alert(`Todos os pedidos cancelados.`);
-  };
 
   return (
     <>
       <h1 className="text-3xl font-bold text-white mb-6 text-center">
-        Pedidos - Batidas DG (Mock)
+        Pedidos - Batidas DG
       </h1>
 
       <p className="mt-6 text-green-400">{status}</p>
@@ -59,13 +73,13 @@ export default function AdminOrders() {
       <div className="flex gap-4 mt-6 mb-4">
         <button
           className="bg-green-600 hover:bg-green-700 text-white font-semibold px-4 py-2 rounded shadow"
-          onClick={finalizarTodos}
+          onClick={() => handleMassAction('finish_all')}
         >
           Finalizar Todos
         </button>
         <button
           className="bg-red-600 hover:bg-red-700 text-white font-semibold px-4 py-2 rounded shadow"
-          onClick={cancelarTodos}
+          onClick={() => handleMassAction('cancel_all')}
         >
           Cancelar Todos
         </button>
@@ -118,13 +132,13 @@ export default function AdminOrders() {
                 <td className="px-4 py-3 flex justify-around">
                   <button
                     className="bg-green-600 rounded hover:bg-green-700 px-4 py-2 text-white font-semibold shadow"
-                    onClick={() => finalizarPedido(pedido.id)}
+                    onClick={() => handleOrderAction(pedido.id, 'finish')}
                   >
                     Finalizar
                   </button>
                   <button
                     className="bg-red-600 rounded hover:bg-red-700 px-4 py-2 text-white font-semibold shadow"
-                    onClick={() => cancelarPedido(pedido.id)}
+                    onClick={() => handleOrderAction(pedido.id, 'cancel')}
                   >
                     Cancelar
                   </button>
