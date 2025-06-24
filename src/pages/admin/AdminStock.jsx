@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";"jspdf-autotable";
+import autoTable from "jspdf-autotable";
 
 export default function AdminStock() {
   const [activeTab, setActiveTab] = useState("registrar");
@@ -15,8 +15,14 @@ export default function AdminStock() {
   const [filteredInsumos, setFilteredInsumos] = useState([]);
   const autocompleteRef = useRef(null);
 
-  // Estoque atual
+  const [filtroEstoque, setFiltroEstoque] = useState("");
+
   const [estoque, setEstoque] = useState([]);
+
+  const estoqueFiltrado = estoque.filter((item) =>
+    item.name.toLowerCase().includes(filtroEstoque.toLowerCase())
+  );
+
 
   const buscarInsumos = async () => {
     try {
@@ -123,55 +129,55 @@ export default function AdminStock() {
   }, []);
 
   const gerarRelatorioPDF = async (insumoId, insumoName, estoqueAtual) => {
-  try {
-    // Busca as movimentações daquele insumo
-    const res = await fetch(`/php/stock/stock.php?action=movimentacoes&insumo_id=${insumoId}`);
-    const data = await res.json();
+    try {
+      // Busca as movimentações daquele insumo
+      const res = await fetch(`/php/stock/stock.php?action=movimentacoes&insumo_id=${insumoId}`);
+      const data = await res.json();
 
-    if (!data.success) {
-      alert("Erro ao buscar movimentações: " + data.message);
-      return;
+      if (!data.success) {
+        alert("Erro ao buscar movimentações: " + data.message);
+        return;
+      }
+
+      const movimentacoes = data.movimentacoes;
+
+      const doc = new jsPDF();
+
+      // Título
+      doc.setFontSize(18);
+      doc.setTextColor("#6b21a8"); // roxo bonito
+      doc.text(`Relatório de Estoque - ${insumoName}`, 14, 20);
+
+      // Estoque atual e data
+      doc.setFontSize(12);
+      doc.setTextColor("#000");
+      doc.text(`Estoque Atual: ${parseFloat(estoqueAtual).toFixed(3)}`, 14, 30);
+      doc.text(`Data do Relatório: ${new Date().toLocaleDateString()}`, 14, 37);
+
+      // Dados pra tabela
+      const tableColumn = ["Tipo", "Quantidade", "Observação", "Data"];
+      const tableRows = movimentacoes.map((mov) => [
+        mov.movement_type.charAt(0).toUpperCase() + mov.movement_type.slice(1),
+        parseFloat(mov.quantity).toFixed(3),
+        mov.observation || "-",
+        new Date(mov.created_at).toLocaleString(),
+      ]);
+
+      autoTable(doc, {
+        startY: 45,
+        head: [tableColumn],
+        body: tableRows,
+        theme: "grid",
+        headStyles: { fillColor: "#7c3aed", textColor: "#fff" },
+        styles: { fontSize: 10 },
+        margin: { left: 14, right: 14 },
+      });
+
+      doc.save(`relatorio_estoque_${insumoName.replace(/\s+/g, "_").toLowerCase()}.pdf`);
+    } catch (error) {
+      alert("Erro ao gerar relatório: " + error.message);
     }
-
-    const movimentacoes = data.movimentacoes;
-
-    const doc = new jsPDF();
-
-    // Título
-    doc.setFontSize(18);
-    doc.setTextColor("#6b21a8"); // roxo bonito
-    doc.text(`Relatório de Estoque - ${insumoName}`, 14, 20);
-
-    // Estoque atual e data
-    doc.setFontSize(12);
-    doc.setTextColor("#000");
-    doc.text(`Estoque Atual: ${parseFloat(estoqueAtual).toFixed(3)}`, 14, 30);
-    doc.text(`Data do Relatório: ${new Date().toLocaleDateString()}`, 14, 37);
-
-    // Dados pra tabela
-    const tableColumn = ["Tipo", "Quantidade", "Observação", "Data"];
-    const tableRows = movimentacoes.map((mov) => [
-      mov.movement_type.charAt(0).toUpperCase() + mov.movement_type.slice(1),
-      parseFloat(mov.quantity).toFixed(3),
-      mov.observation || "-",
-      new Date(mov.created_at).toLocaleString(),
-    ]);
-
-    autoTable(doc, {
-       startY: 45,
-       head: [tableColumn],
-       body: tableRows,
-       theme: "grid",
-       headStyles: { fillColor: "#7c3aed", textColor: "#fff" },
-       styles: { fontSize: 10 },
-       margin: { left: 14, right: 14 },
-    });
-
-    doc.save(`relatorio_estoque_${insumoName.replace(/\s+/g, "_").toLowerCase()}.pdf`);
-  } catch (error) {
-    alert("Erro ao gerar relatório: " + error.message);
-  }
-};
+  };
 
   return (
     <div className="min-h-screen bg-gray-900 p-5 flex flex-col items-center">
@@ -181,21 +187,19 @@ export default function AdminStock() {
       <div className="flex w-full max-w-5xl mb-6 rounded-lg overflow-hidden border border-purple-500">
         <button
           onClick={() => setActiveTab("registrar")}
-          className={`flex-1 py-3 font-semibold text-center transition ${
-            activeTab === "registrar"
+          className={`flex-1 py-3 font-semibold text-center transition ${activeTab === "registrar"
               ? "bg-purple-500 text-white"
               : "bg-gray-800 text-purple-400 hover:bg-purple-600 hover:text-white"
-          }`}
+            }`}
         >
           Registrar Movimentação
         </button>
         <button
           onClick={() => setActiveTab("estoque")}
-          className={`flex-1 py-3 font-semibold text-center transition ${
-            activeTab === "estoque"
+          className={`flex-1 py-3 font-semibold text-center transition ${activeTab === "estoque"
               ? "bg-purple-500 text-white"
               : "bg-gray-800 text-purple-400 hover:bg-purple-600 hover:text-white"
-          }`}
+            }`}
         >
           Estoque Atual
         </button>
@@ -271,43 +275,52 @@ export default function AdminStock() {
         )}
 
         {activeTab === "estoque" && (
-          <div className="bg-gray-800 rounded-lg shadow-lg overflow-x-auto">
-            <table className="min-w-full text-white">
-              <thead>
-                <tr className="bg-gray-700 text-purple-400">
-                  <th className="px-4 py-3 text-left">Nome</th>
-                  <th className="px-4 py-3 text-left">Unidade</th>
-                  <th className="px-4 py-3 text-left">Quantidade em Estoque</th>
-                  <th className="px-4 py-3 text-left">Ação</th>
-                </tr>
-              </thead>
-              <tbody>
-                {estoque.length === 0 ? (
-                            <tr>
-                            <td colSpan="4" className="text-center py-5 text-purple-300">
-                            Nenhum insumo no estoque.
-                            </td>
-                            </tr>
-                     ) : (
-                     estoque.map((item) => (
-                            <tr key={item.id} className="border-t border-gray-700">
-                            <td className="px-4 py-3">{item.name}</td>
-                            <td className="px-4 py-3">{item.unit}</td>
-                            <td className="px-4 py-3">{parseFloat(item.quantity).toFixed(3)}</td>
-                            <td className="px-4 py-3">
-                            <button
-                                   onClick={() => gerarRelatorioPDF(item.id, item.name, item.quantity)}
-                                   className="bg-purple-500 hover:bg-purple-600 text-white py-1 px-3 rounded font-semibold"
-                            >
-                                   Relatório
-                            </button>
+          <div className="bg-gray-800 rounded-lg shadow-lg p-4">
+            <input
+              type="text"
+              placeholder="Filtrar estoque pelo nome"
+              value={filtroEstoque}
+              onChange={(e) => setFiltroEstoque(e.target.value)}
+              className="w-full mb-4 p-3 rounded bg-gray-700 text-white"
+            />
 
-                            </td>
-                            </tr>
-                     ))
-                     )}
-              </tbody>
-            </table>
+            <div className="overflow-x-auto">
+              <table className="min-w-full text-white">
+                <thead>
+                  <tr className="bg-gray-700 text-purple-400">
+                    <th className="px-4 py-3 text-left">Nome</th>
+                    <th className="px-4 py-3 text-left">Unidade</th>
+                    <th className="px-4 py-3 text-left">Quantidade em Estoque</th>
+                    <th className="px-4 py-3 text-left">Ação</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {estoqueFiltrado.length === 0 ? (
+                    <tr>
+                      <td colSpan="4" className="text-center py-5 text-purple-300">
+                        Nenhum insumo encontrado.
+                      </td>
+                    </tr>
+                  ) : (
+                    estoqueFiltrado.map((item) => (
+                      <tr key={item.id} className="border-t border-gray-700">
+                        <td className="px-4 py-3">{item.name}</td>
+                        <td className="px-4 py-3">{item.unit}</td>
+                        <td className="px-4 py-3">{parseFloat(item.quantity).toFixed(3)}</td>
+                        <td className="px-4 py-3">
+                          <button
+                            onClick={() => gerarRelatorioPDF(item.id, item.name, item.quantity)}
+                            className="bg-purple-500 hover:bg-purple-600 text-white py-1 px-3 rounded font-semibold"
+                          >
+                            Relatório
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </div>

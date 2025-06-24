@@ -10,6 +10,12 @@ export default function AdminSupplies() {
 
   // States Listagem
   const [insumos, setInsumos] = useState([]);
+  const [filtroInsumos, setFiltroInsumos] = useState("");
+
+  const insumosFiltrados = insumos.filter((i) =>
+    i.name.toLowerCase().includes(filtroInsumos.toLowerCase())
+  );
+
 
   // State edição
   const [editId, setEditId] = useState(null);
@@ -130,18 +136,17 @@ export default function AdminSupplies() {
           <button
             key={tab}
             disabled={tab === "editar" && editId === null}
-            className={`flex-1 py-3 text-center font-semibold transition ${
-              activeTab === tab
+            className={`flex-1 py-3 text-center font-semibold transition ${activeTab === tab
                 ? "bg-purple-500 text-white"
                 : "bg-gray-800 text-purple-400 hover:bg-purple-600 hover:text-white"
-            } ${tab === "editar" && editId === null ? "opacity-50 cursor-not-allowed" : ""}`}
+              } ${tab === "editar" && editId === null ? "opacity-50 cursor-not-allowed" : ""}`}
             onClick={() => setActiveTab(tab)}
           >
             {tab === "cadastrar"
               ? "Cadastrar"
               : tab === "listar"
-              ? "Insumos Cadastrados"
-              : "Editar Insumo"}
+                ? "Insumos Cadastrados"
+                : "Editar Insumo"}
           </button>
         ))}
       </div>
@@ -190,48 +195,58 @@ export default function AdminSupplies() {
         )}
 
         {activeTab === "listar" && (
-          <div className="overflow-x-auto bg-gray-800 rounded-lg shadow-lg">
-            <table className="min-w-full text-white">
-              <thead>
-                <tr className="bg-gray-700 text-purple-400">
-                  <th className="px-4 py-3 text-left">Nome</th>
-                  <th className="px-4 py-3 text-left">Unidade</th>
-                  <th className="px-4 py-3 text-left">Quantidade</th>
-                  <th className="px-4 py-3 text-left">Ações</th>
-                </tr>
-              </thead>
-              <tbody>
-                {insumos.length === 0 ? (
-                  <tr>
-                    <td colSpan="4" className="text-center py-5 text-purple-300">
-                      Nenhum insumo cadastrado.
-                    </td>
+          <div>
+            <input
+              type="text"
+              placeholder="Filtrar insumos pelo nome"
+              value={filtroInsumos}
+              onChange={(e) => setFiltroInsumos(e.target.value)}
+              className="w-full mb-4 p-3 rounded bg-gray-700 text-white"
+            />
+
+            <div className="overflow-x-auto bg-gray-800 rounded-lg shadow-lg">
+              <table className="min-w-full text-white">
+                <thead>
+                  <tr className="bg-gray-700 text-purple-400">
+                    <th className="px-4 py-3 text-left">Nome</th>
+                    <th className="px-4 py-3 text-left">Unidade</th>
+                    <th className="px-4 py-3 text-left">Quantidade</th>
+                    <th className="px-4 py-3 text-left">Ações</th>
                   </tr>
-                ) : (
-                  insumos.map((item) => (
-                    <tr key={item.id} className="border-t border-gray-700">
-                      <td className="px-4 py-3">{item.name}</td>
-                      <td className="px-4 py-3">{item.unit}</td>
-                      <td className="px-4 py-3">{parseFloat(item.total_quantity).toFixed(3)}</td>
-                      <td className="px-4 py-3 space-x-2">
-                        <button
-                          onClick={() => iniciarEdicao(item)}
-                          className="bg-purple-500 hover:bg-purple-600 text-white font-semibold px-3 py-1 rounded"
-                        >
-                          Editar
-                        </button>
-                        <button
-                          onClick={() => excluirInsumo(item.id)}
-                          className="bg-red-600 hover:bg-red-700 text-white font-semibold px-3 py-1 rounded"
-                        >
-                          Excluir
-                        </button>
+                </thead>
+                <tbody>
+                  {insumosFiltrados.length === 0 ? (
+                    <tr>
+                      <td colSpan="4" className="text-center py-5 text-purple-300">
+                        Nenhum insumo encontrado.
                       </td>
                     </tr>
-                  ))
-                )}
-              </tbody>
-            </table>
+                  ) : (
+                    insumosFiltrados.map((item) => (
+                      <tr key={item.id} className="border-t border-gray-700">
+                        <td className="px-4 py-3">{item.name}</td>
+                        <td className="px-4 py-3">{item.unit}</td>
+                        <td className="px-4 py-3">{parseFloat(item.total_quantity).toFixed(3)}</td>
+                        <td className="px-4 py-3 space-x-2">
+                          <button
+                            onClick={() => iniciarEdicao(item)}
+                            className="bg-purple-500 hover:bg-purple-600 text-white font-semibold px-3 py-1 rounded"
+                          >
+                            Editar
+                          </button>
+                          <button
+                            onClick={() => excluirInsumo(item.id)}
+                            className="bg-red-600 hover:bg-red-700 text-white font-semibold px-3 py-1 rounded"
+                          >
+                            Excluir
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </div>

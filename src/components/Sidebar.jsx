@@ -13,6 +13,7 @@ export default function Sidebar() {
     { key: 'whatsapp', nome: 'Whatsapp', icone: 'fa-brands fa-whatsapp' },
     { key: 'supplies', nome: 'Insumos', icone: 'fa-circle-info' },
     { key: 'stock', nome: 'Estoque', icone: 'fa-boxes-stacked' },
+    { key: 'products', nome: 'Produtos', icone: 'fa-bottle-water' },
   ];
 
 
