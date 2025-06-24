@@ -26,12 +26,12 @@ export default function AppRoutes() {
 
       <Route
         path="/pedidos"
-        element={role === 'pedidos' ? <Pedidos /> : <Navigate to="/login" />}
+        element={role === 'orders' ? <Pedidos /> : <Navigate to="/login" />}
       />
 
       <Route
-        path="/portaria"
-        element={role === 'portaria' ? <Portaria /> : <Navigate to="/login" />}
+        path="/checkin"
+        element={role === 'checkin' ? <Portaria /> : <Navigate to="/login" />}
       />
 
       <Route path="*" element={<Navigate to="/login" />} />

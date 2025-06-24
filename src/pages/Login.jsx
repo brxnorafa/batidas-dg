@@ -25,9 +25,9 @@ export default function LoginPage() {
 
             if (data.success) {
                 login(data.role);
-                if (data.role === 'administrador') navigate('/admin/orders');
-                else if (data.role === 'pedidos') navigate('/pedidos');
-                else if (data.role === 'portaria') navigate('/portaria');
+                if (data.role === 'administrator') navigate('/admin/orders');
+                else if (data.role === 'orders') navigate('/orders');
+                else if (data.role === 'checkin') navigate('/checkin');
             } else {
                 setError(data.message || 'Usuário ou senha inválidos');
             }
