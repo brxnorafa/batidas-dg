@@ -3,6 +3,7 @@ import Login from '../pages/Login';
 import Pedidos from '../pages/Pedidos';
 import Portaria from '../pages/Portaria';
 import AdminOrders from '../pages/admin/AdminOrders';
+import AdminLayout from '../layouts/AdminLayout'; 
 import { useAuth } from '../contexts/AuthContext';
 
 export default function AppRoutes() {
@@ -10,15 +11,14 @@ export default function AppRoutes() {
 
   return (
     <Routes>
-      <Route
-        path="/login"
-        element={<Login />}
-      />
+      <Route path="/login" element={<Login />} />
 
       <Route
-        path="/admin/orders"
-        element={role === 'administrador' ? <AdminOrders /> : <Navigate to="/login" />}
-      />
+        path="/admin"
+        element={role === 'administrador' ? <AdminLayout /> : <Navigate to="/login" />}
+      >
+        <Route path="orders" element={<AdminOrders />} />
+      </Route>
 
       <Route
         path="/pedidos"
