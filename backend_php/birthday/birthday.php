@@ -1,7 +1,7 @@
 <?php
 header('Content-Type: application/json; charset=utf-8');
 
-include './config/conn.php';
+include '../config/conn.php';
 
 try {
     $hoje = new DateTime();
@@ -17,7 +17,7 @@ try {
                 ELSE NULL
             END AS tipo
         FROM customers
-        WHERE DATE_FORMAT(birth_date, '%m-%d') IN (:quinze, :umMes)
+        WHERE (DATE_FORMAT(birth_date, '%m-%d') = :quinze OR DATE_FORMAT(birth_date, '%m-%d') = :umMes)
           AND phone IS NOT NULL AND phone != ''
     ";
 
@@ -28,6 +28,7 @@ try {
 
     $resultados = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
+    // Filtra só os que tem tipo válido (quinze ou mes)
     $aniversariantes = array_filter($resultados, function ($p) {
         return in_array($p['tipo'], ['quinze', 'mes']);
     });
