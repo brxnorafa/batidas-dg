@@ -4,20 +4,38 @@ export default function AdminWhatsapp() {
   const instanceId = "LITE-CPR8X2-C38SH4";
   const apiToken = "CLCLsyIcyuJ6rYm18hL97kW9TzUbOOmO9";
 
+  const [activeTab, setActiveTab] = useState("instancia");
+  const [subTab, setSubTab] = useState("status");
+
   const [instanceData, setInstanceData] = useState(null);
   const [profilePic, setProfilePic] = useState("");
   const [profileName, setProfileName] = useState("");
   const [qrCode, setQrCode] = useState("");
   const [showModal, setShowModal] = useState(false);
-  const [testNumber, setTestNumber] = useState("");
-  const [testMessage, setTestMessage] = useState("");
+
   const [messageMes, setMessageMes] = useState(
     "🎉 Olá {nome}, parabéns adiantado pelo seu aniversário! A equipe Batidas DG deseja tudo de bom pra você! 🥳"
   );
   const [messageQuinze, setMessageQuinze] = useState(
     "🎉 Olá {nome}, faltam só 15 dias pro seu aniversário! A gente já tá comemorando aqui na Batidas DG! 🎉🥳"
   );
+
+  const [testNumber, setTestNumber] = useState("");
+  const [testMessage, setTestMessage] = useState("");
   const [loadingInstance, setLoadingInstance] = useState(true);
+
+  const formatDate = (timestamp) => {
+    if (!timestamp) return "-";
+    const date = new Date(timestamp);
+    return date.toLocaleDateString("pt-BR", {
+      day: "2-digit",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
 
   const fetchInstanceStatus = async () => {
     setLoadingInstance(true);
@@ -26,22 +44,16 @@ export default function AdminWhatsapp() {
         `https://api.w-api.app/v1/instance/fetch-instance?instanceId=${instanceId}`,
         { headers: { Authorization: `Bearer ${apiToken}` } }
       );
-      if (!res.ok) throw new Error("Erro ao buscar status da instância");
       const data = await res.json();
-
       setInstanceData(data);
-
-      if (data.connected) {
-        await fetchProfilePic(data.instanceId);
-      } else {
+      if (data.connected) await fetchProfilePic(data.instanceId);
+      else {
         setProfileName("");
         setProfilePic("");
       }
     } catch (err) {
       console.error(err);
       setInstanceData(null);
-      setProfileName("");
-      setProfilePic("");
     } finally {
       setLoadingInstance(false);
     }
@@ -53,14 +65,11 @@ export default function AdminWhatsapp() {
         `https://api.w-api.app/v1/instance/device?instanceId=${id}`,
         { headers: { Authorization: `Bearer ${apiToken}` } }
       );
-      if (!res.ok) throw new Error("Erro ao buscar foto do perfil");
       const data = await res.json();
       setProfileName(data.name || "");
       setProfilePic(data.profilePictureUrl || "");
     } catch (err) {
       console.error(err);
-      setProfileName("");
-      setProfilePic("");
     }
   };
 
@@ -70,74 +79,32 @@ export default function AdminWhatsapp() {
         `https://api.w-api.app/v1/instance/qr-code?instanceId=${instanceId}&image=enable`,
         { headers: { Authorization: `Bearer ${apiToken}` } }
       );
-      if (!res.ok) throw new Error("Erro ao buscar QR Code");
       const blob = await res.blob();
       setQrCode(URL.createObjectURL(blob));
       setShowModal(true);
     } catch (err) {
       console.error(err);
-      alert("Erro ao buscar QR Code, veja o console.");
+      alert("Erro ao buscar QR Code.");
     }
   };
 
   const disconnectInstance = async () => {
     try {
-      const res = await fetch(
+      await fetch(
         `https://api.w-api.app/v1/instance/disconnect?instanceId=${instanceId}`,
         { headers: { Authorization: `Bearer ${apiToken}` } }
       );
-      if (!res.ok) throw new Error("Erro ao desconectar");
-      const data = await res.json();
-      if (!data.error) alert(data.message);
       await fetchInstanceStatus();
     } catch (err) {
       console.error(err);
-      alert("Erro ao desconectar, veja o console.");
-    }
-  };
-
-  const sendTestMessage = async () => {
-    if (!testNumber.trim() || !testMessage.trim()) {
-      alert("Preencha número e mensagem!");
-      return;
-    }
-    try {
-      const res = await fetch(
-        `https://api.w-api.app/v1/message/send-text?instanceId=${instanceId}`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${apiToken}`,
-          },
-          body: JSON.stringify({
-            phone: testNumber,
-            message: testMessage,
-            delayMessage: 15,
-          }),
-        }
-      );
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.message || res.statusText);
-      alert("Mensagem enviada!");
-      setTestNumber("");
-      setTestMessage("");
-    } catch (err) {
-      console.error(err);
-      alert("Erro ao enviar mensagem, veja o console.");
+      alert("Erro ao desconectar.");
     }
   };
 
   const buscarAniversariantes = async () => {
     try {
       const res = await fetch("/php/birthday.php");
-      if (!res.ok) throw new Error("Erro ao buscar aniversariantes");
       const aniversariantes = await res.json();
-
-      if (!Array.isArray(aniversariantes) || aniversariantes.length === 0) {
-        alert("Nenhum aniversariante encontrado 😢");
-        return;
-      }
 
       for (const pessoa of aniversariantes) {
         let mensagem = null;
@@ -146,7 +113,6 @@ export default function AdminWhatsapp() {
         } else if (pessoa.tipo === "quinze") {
           mensagem = messageQuinze.replace("{nome}", pessoa.nome);
         }
-
         if (!mensagem) continue;
 
         await fetch(
@@ -166,172 +132,241 @@ export default function AdminWhatsapp() {
         );
       }
 
-      alert("Mensagens enviadas! 🎉📱");
+      alert("Mensagens enviadas!");
     } catch (err) {
       console.error(err);
       alert("Erro ao buscar aniversariantes.");
     }
   };
 
-  const formatDate = (timestamp) => {
-    if (!timestamp) return "-";
-    const date = new Date(timestamp);
-    return date.toLocaleDateString("pt-BR", {
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
+  const sendTestMessage = async () => {
+    if (!testNumber || !testMessage) return alert("Preencha os campos");
+    try {
+      await fetch(
+        `https://api.w-api.app/v1/message/send-text?instanceId=${instanceId}`,
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${apiToken}`,
+          },
+          body: JSON.stringify({
+            phone: testNumber,
+            message: testMessage,
+            delayMessage: 15,
+          }),
+        }
+      );
+      alert("Mensagem enviada!");
+      setTestNumber("");
+      setTestMessage("");
+    } catch (err) {
+      console.error(err);
+      alert("Erro ao enviar.");
+    }
   };
 
   useEffect(() => {
-    fetchInstanceStatus();
-  }, []);
+    if (activeTab === "instancia") fetchInstanceStatus();
+  }, [activeTab]);
 
   return (
-    <>
-      <h1 className="text-4xl font-extrabold mb-10">📱 Configurações do Whatsapp</h1>
+    <div className="max-w-4xl mx-auto p-6 text-white">
+      <h1 className="text-3xl font-bold mb-6 text-center">📱 Whatsapp Automático</h1>
 
-      <div className="flex flex-col gap-10">
-        {loadingInstance ? (
-          <p>Carregando dados da instância...</p>
-        ) : instanceData ? (
-          <section className="bg-gray-800 rounded-xl p-8 w-full shadow-lg">
-            <h2 className="text-2xl font-semibold mb-6">
-              Instância: {instanceData.instanceName}
-            </h2>
+      {/* Tabs principais */}
+      <div className="flex mb-6 border border-purple-500 rounded overflow-hidden">
+        <button
+          onClick={() => setActiveTab("instancia")}
+          className={`flex-1 py-3 font-semibold transition ${activeTab === "instancia"
+            ? "bg-purple-500 text-white"
+            : "bg-gray-800 text-purple-400 hover:bg-purple-600 hover:text-white"
+            }`}
+        >
+          Instância
+        </button>
+        <button
+          onClick={() => setActiveTab("teste")}
+          className={`flex-1 py-3 font-semibold transition ${activeTab === "teste"
+            ? "bg-purple-500 text-white"
+            : "bg-gray-800 text-purple-400 hover:bg-purple-600 hover:text-white"
+            }`}
+        >
+          Teste
+        </button>
+      </div>
 
-            <div className="flex items-center gap-5 mb-6">
-              {instanceData.connected && profilePic ? (
-                <img
-                  src={profilePic}
-                  alt="Foto do Perfil"
-                  className="w-20 h-20 rounded-full border-2 border-green-400 object-cover"
-                />
+      {activeTab === "instancia" && (
+        <>
+          {/* Subtabs */}
+          <div className="flex border-b border-purple-400 mb-6">
+            <button
+              onClick={() => setSubTab("status")}
+              className={`px-4 py-2 font-medium transition border-b-2 ${subTab === "status"
+                  ? "border-purple-400 text-white"
+                  : "border-transparent text-purple-300 hover:text-white"
+                }`}
+            >
+              Status
+            </button>
+            <button
+              onClick={() => setSubTab("config")}
+              className={`px-4 py-2 font-medium transition border-b-2 ${subTab === "config"
+                  ? "border-purple-400 text-white"
+                  : "border-transparent text-purple-300 hover:text-white"
+                }`}
+            >
+              Configurações
+            </button>
+          </div>
+
+          {/* Conteúdo das subtabs */}
+          {subTab === "status" && (
+            <div className="bg-gray-800 rounded-xl p-6 shadow-lg">
+              {loadingInstance ? (
+                <p>Carregando instância...</p>
+              ) : instanceData ? (
+                <>
+                  <div className="flex items-center gap-5 mb-6">
+                    {instanceData.connected && profilePic ? (
+                      <img
+                        src={profilePic}
+                        alt="Perfil"
+                        className="w-20 h-20 rounded-full border-2 border-green-400 object-cover"
+                      />
+                    ) : (
+                      <div className="w-20 h-20 rounded-full bg-gray-700 flex items-center justify-center text-3xl text-gray-400 font-bold">
+                        ?
+                      </div>
+                    )}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4 text-sm text-gray-300">
+                      <div><b>🆔 ID da Instância:</b> {instanceData.instanceId}</div>
+                      <div><b>🔐 Nome da Instância:</b> {instanceData.instanceName}</div>
+                      <div><b>📞 Número Conectado:</b> {instanceData.connectedPhone || "-"}</div>
+                      <div><b>👤 Nome do Perfil:</b> {profileName || "-"}</div>
+                      <div>
+                        <b>📶 Status de Conexão:</b>{" "}
+                        <span className={instanceData.connected ? "text-green-400" : "text-red-400"}>
+                          {instanceData.connected ? "Conectado" : "Desconectado"}
+                        </span>
+                      </div>
+                      <div><b>📅 Criada em:</b> {formatDate(instanceData.created)}</div>
+                      <div><b>⏳ Expira em:</b> {formatDate(instanceData.expires)}</div>
+                      <div><b>💳 Status de Pagamento:</b> {instanceData.paymentStatus}</div>
+                      <div><b>🧪 Modo de Teste:</b> {instanceData.isTrial ? "Sim" : "Não"}</div>
+                      <div><b>📨 Mensagens Enviadas:</b> {instanceData.messagesSent}</div>
+                      <div><b>📥 Mensagens Recebidas:</b> {instanceData.messagesReceived}</div>
+                      <div><b>👥 Contatos:</b> {instanceData.contacts}</div>
+                      <div><b>💬 Conversas:</b> {instanceData.chats}</div>
+                    </div>
+                  </div>
+
+                  {instanceData.connected ? (
+                    <>
+                      <button
+                        onClick={buscarAniversariantes}
+                        className="w-full bg-green-600 hover:bg-green-700 py-3 rounded font-semibold mb-3"
+                      >
+                        🎂 Buscar Aniversariantes
+                      </button>
+                      <button
+                        onClick={disconnectInstance}
+                        className="w-full bg-red-600 hover:bg-red-700 py-3 rounded font-semibold"
+                      >
+                        📴 Desconectar
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      onClick={fetchQrCode}
+                      className="w-full bg-blue-600 hover:bg-blue-700 py-3 rounded font-semibold"
+                    >
+                      📲 Conectar Número
+                    </button>
+                  )}
+                </>
               ) : (
-                <div className="w-20 h-20 rounded-full bg-gray-700 flex items-center justify-center text-3xl text-gray-400 font-bold">
-                  ?
-                </div>
+                <p>Erro ao carregar status da instância.</p>
               )}
-
-              <div>
-                <p>📛 <b>{instanceData.connected ? profileName || "-" : "-"}</b></p>
-                <p>📱 {instanceData.connected ? instanceData.connectedPhone || "-" : "-"}</p>
-                <p>
-                  <b className={instanceData.connected ? "text-green-400" : "text-red-400"}>
-                    {instanceData.connected ? "Conectado" : "Desconectado"}
-                  </b>
-                </p>
-              </div>
             </div>
+          )}
 
-            {/* Aqui: mensagens personalizadas só se conectado */}
-            {instanceData.connected && (
-              <>
-                <p className="mt-6 mb-1 font-semibold text-yellow-400">
-                  Mensagem para aniversariantes daqui 1 mês
+          {subTab === "config" && (
+            <div className="bg-gray-800 rounded-xl p-6 shadow-lg space-y-4">
+              <div>
+                <p className="mb-1 text-yellow-400 font-semibold">
+                  Mensagem para aniversariantes daqui 1 mês:
                 </p>
                 <textarea
+                  rows={3}
                   value={messageMes}
                   onChange={(e) => setMessageMes(e.target.value)}
-                  rows={3}
-                  placeholder="Mensagem para aniversariantes daqui 1 mês"
-                  className="w-full p-3 rounded-lg bg-gray-700 text-white"
+                  className="w-full p-3 rounded bg-gray-700 text-white"
                 />
-
-                <p className="mt-4 mb-1 font-semibold text-yellow-400">
-                  Mensagem para aniversariantes daqui 15 dias
+              </div>
+              <div>
+                <p className="mb-1 text-yellow-400 font-semibold">
+                  Mensagem para aniversariantes daqui 15 dias:
                 </p>
                 <textarea
+                  rows={3}
                   value={messageQuinze}
                   onChange={(e) => setMessageQuinze(e.target.value)}
-                  rows={3}
-                  placeholder="Mensagem para aniversariantes daqui 15 dias"
-                  className="w-full p-3 rounded-lg bg-gray-700 text-white"
+                  className="w-full p-3 rounded bg-gray-700 text-white"
                 />
-              </>
-            )}
+              </div>
+            </div>
+          )}
+        </>
+      )}
 
-            {instanceData.connected ? (
-              <>
-                <button
-                  onClick={buscarAniversariantes}
-                  className="mt-4 w-full bg-green-500 hover:bg-green-600 py-3 rounded-lg font-semibold"
-                >
-                  🎂 Buscar Aniversariantes...
-                </button>
-
-                <button
-                  onClick={disconnectInstance}
-                  className="mt-3 w-full bg-red-600 hover:bg-red-700 py-3 rounded-lg font-semibold"
-                >
-                  📴 Desconectar Número
-                </button>
-              </>
-            ) : (
-              <button
-                onClick={fetchQrCode}
-                className="mt-8 w-full bg-blue-600 hover:bg-blue-700 py-3 rounded-lg font-semibold"
-              >
-                📲 Conectar Número
-              </button>
-            )}
-          </section>
-        ) : (
-          <p>Erro ao carregar dados da instância.</p>
-        )}
-
-        <section className="bg-gray-800 rounded-xl p-8 w-full shadow-lg">
-          <h2 className="text-2xl font-semibold mb-6">Enviar Mensagem de Teste</h2>
+      {activeTab === "teste" && (
+        <div className="bg-gray-800 rounded-xl p-6 shadow-lg space-y-4">
           <input
             type="text"
             placeholder="Número com DDI e DDD"
             value={testNumber}
             onChange={(e) => setTestNumber(e.target.value)}
-            className="w-full mb-4 p-3 rounded-lg bg-gray-700 text-white"
+            className="w-full p-3 rounded bg-gray-700 text-white"
           />
           <input
             type="text"
             placeholder="Mensagem"
             value={testMessage}
             onChange={(e) => setTestMessage(e.target.value)}
-            className="w-full mb-4 p-3 rounded-lg bg-gray-700 text-white"
+            className="w-full p-3 rounded bg-gray-700 text-white"
           />
           <button
             onClick={sendTestMessage}
-            className="w-full bg-green-600 hover:bg-green-700 py-3 rounded-lg font-semibold"
+            className="w-full bg-green-600 hover:bg-green-700 py-3 rounded font-semibold"
           >
             📤 Enviar Mensagem
           </button>
-        </section>
-      </div>
+        </div>
+      )}
 
+      {/* Modal QR Code */}
       {showModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70">
           <div className="bg-gray-900 p-6 rounded-2xl shadow-2xl max-w-sm w-full text-center">
             <h2 className="text-2xl font-bold mb-4">📲 Escaneie o QR Code</h2>
             {qrCode ? (
-              <img
-                src={qrCode}
-                alt="QR Code"
-                className="w-56 h-56 mx-auto rounded-lg"
-              />
+              <img src={qrCode} alt="QR Code" className="w-56 h-56 mx-auto rounded-lg" />
             ) : (
-              <p className="text-gray-300">Carregando QR Code...</p>
+              <p>Carregando QR Code...</p>
             )}
             <button
               onClick={() => {
                 setShowModal(false);
                 fetchInstanceStatus();
               }}
-              className="mt-5 w-full bg-red-600 hover:bg-red-700 py-2.5 rounded-lg font-semibold text-white"
+              className="mt-5 w-full bg-red-600 hover:bg-red-700 py-2.5 rounded font-semibold"
             >
               Fechar
             </button>
           </div>
         </div>
       )}
-    </>
+    </div>
   );
 }
