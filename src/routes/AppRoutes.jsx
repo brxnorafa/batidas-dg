@@ -1,7 +1,6 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Login from '../pages/Login';
-import Pedidos from '../pages/Pedidos';
-import Portaria from '../pages/Portaria';
+import Orders from '../pages/Orders';
 import AdminOrders from '../pages/admin/AdminOrders';
 import AdminRegister from '../pages/admin/AdminRegister';
 import AdminLayout from '../layouts/AdminLayout'; 
@@ -31,8 +30,8 @@ export default function AppRoutes() {
       </Route>
 
       <Route
-        path="/pedidos"
-        element={role === 'orders' ? <Pedidos /> : <Navigate to="/login" />}
+        path="/orders"
+        element={role === 'orders' ? <Orders /> : <Navigate to="/login" />}
       />
 
       <Route

@@ -15,5 +15,6 @@ export default defineConfig({
         rewrite: (path) => path.replace(/^\/php/, ''),
       },
     },
+    host: true,
   },
 })

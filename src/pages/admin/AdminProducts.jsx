@@ -236,7 +236,7 @@ export default function AdminProducts() {
       action: "salvar_produto",
       nome: nome.trim(),
       preco: Number(preco),
-      categoriaId: Number(categoriaSelecionada),
+      categoriaSelecionada: Number(categoriaSelecionada),
       insumosObrigatorios: Object.values(insumosSelecionados).map(({ id, quantidade }) => ({
         id,
         quantidade,

@@ -28,30 +28,10 @@ if ($method === 'GET') {
 
         if ($action === 'estoque') {
             try {
-                // Pega todos os insumos ativos
-                $sql = "SELECT id, name, unit FROM supplies WHERE active = 1 ORDER BY name";
+                // Pega todos os insumos ativos e a quantidade atual direto da tabela supplies
+                $sql = "SELECT id, name, unit, total_quantity AS quantity FROM supplies WHERE active = 1 ORDER BY name";
                 $stmt = $pdo->query($sql);
                 $supplies = $stmt->fetchAll(PDO::FETCH_ASSOC);
-
-                // Para cada insumo, calcula a quantidade atual baseado em stock_movements
-                foreach ($supplies as &$supply) {
-                    $sqlMov = "SELECT
-                        COALESCE(SUM(CASE WHEN movement_type = 'purchase' THEN quantity ELSE 0 END),0) AS entradas,
-                        COALESCE(SUM(CASE WHEN movement_type = 'sale' THEN quantity ELSE 0 END),0) AS saidas,
-                        COALESCE(MAX(CASE WHEN movement_type = 'adjustment' THEN quantity ELSE NULL END), NULL) AS ajuste
-                        FROM stock_movements WHERE supply_id = :supply_id";
-
-                    $stmtMov = $pdo->prepare($sqlMov);
-                    $stmtMov->execute([':supply_id' => $supply['id']]);
-                    $mov = $stmtMov->fetch(PDO::FETCH_ASSOC);
-
-                    if ($mov['ajuste'] !== null) {
-                        $quantidadeAtual = floatval($mov['ajuste']);
-                    } else {
-                        $quantidadeAtual = floatval($mov['entradas']) - floatval($mov['saidas']);
-                    }
-                    $supply['quantity'] = $quantidadeAtual;
-                }
 
                 resposta(true, "Estoque listado com sucesso.", ['estoque' => $supplies]);
             } catch (Exception $e) {
@@ -104,7 +84,12 @@ if ($method === 'GET') {
     }
 
     try {
-        $sql = "INSERT INTO stock_movements (supply_id, movement_type, quantity, observation, created_at) VALUES (:supply_id, :movement_type, :quantity, :observation, NOW())";
+        // Inicia transação para garantir atomicidade
+        $pdo->beginTransaction();
+
+        // Insere a movimentação
+        $sql = "INSERT INTO stock_movements (supply_id, movement_type, quantity, observation, created_at) 
+                VALUES (:supply_id, :movement_type, :quantity, :observation, NOW())";
         $stmt = $pdo->prepare($sql);
         $stmt->execute([
             ':supply_id' => $supply_id,
@@ -112,8 +97,47 @@ if ($method === 'GET') {
             ':quantity' => $quantidade,
             ':observation' => $observacao,
         ]);
+
+        // Atualiza o total_quantity conforme o tipo
+        if ($tipo === 'purchase') {
+            // Entrada: soma a quantidade
+            $sqlUpdate = "UPDATE supplies SET total_quantity = total_quantity + :quantidade WHERE id = :supply_id";
+            $stmtUpdate = $pdo->prepare($sqlUpdate);
+            $stmtUpdate->execute([':quantidade' => $quantidade, ':supply_id' => $supply_id]);
+        } elseif ($tipo === 'sale') {
+            // Saída: subtrai a quantidade
+            // Verifica estoque atual antes de subtrair para evitar negativo
+            $sqlCheck = "SELECT total_quantity FROM supplies WHERE id = :supply_id";
+            $stmtCheck = $pdo->prepare($sqlCheck);
+            $stmtCheck->execute([':supply_id' => $supply_id]);
+            $estoqueAtual = $stmtCheck->fetchColumn();
+
+            if ($estoqueAtual === false) {
+                $pdo->rollBack();
+                resposta(false, "Insumo não encontrado.");
+            }
+
+            if ($estoqueAtual < $quantidade) {
+                $pdo->rollBack();
+                resposta(false, "Quantidade insuficiente no estoque para saída.");
+            }
+
+            $sqlUpdate = "UPDATE supplies SET total_quantity = total_quantity - :quantidade WHERE id = :supply_id";
+            $stmtUpdate = $pdo->prepare($sqlUpdate);
+            $stmtUpdate->execute([':quantidade' => $quantidade, ':supply_id' => $supply_id]);
+        } elseif ($tipo === 'adjustment') {
+            // Ajuste: seta o total_quantity para o valor exato informado em quantity
+            $sqlUpdate = "UPDATE supplies SET total_quantity = :quantidade WHERE id = :supply_id";
+            $stmtUpdate = $pdo->prepare($sqlUpdate);
+            $stmtUpdate->execute([':quantidade' => $quantidade, ':supply_id' => $supply_id]);
+        }
+
+        // Finaliza transação
+        $pdo->commit();
+
         resposta(true, "Movimentação registrada com sucesso.");
     } catch (Exception $e) {
+        $pdo->rollBack();
         resposta(false, "Erro ao registrar movimentação: " . $e->getMessage());
     }
 } else {

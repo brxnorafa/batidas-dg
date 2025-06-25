@@ -98,53 +98,84 @@ export default function AdminOrders() {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-700">
-            {pedidos.map((pedido) => (
-              <tr key={pedido.id}>
-                <td className="px-4 py-3">{pedido.id}</td>
-                <td className="px-4 py-3">
-                  {new Date(pedido.created_at).toLocaleString('pt-BR', {
-                    day: '2-digit',
-                    month: '2-digit',
-                    year: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })}
-                </td>
-                <td className="px-4 py-3">
-                  <div>
-                    {pedido.itens.map((item, index) => (
-                      <div
-                        key={index}
-                        className="flex justify-between border-t border-gray-600 px-2 py-1"
-                      >
-                        <span>{item.nome}</span>
-                        <span className="font-bold">x{item.quantidade}</span>
-                      </div>
-                    ))}
-                  </div>
-                </td>
-                <td className="px-4 py-3">{pedido.nome_cliente}</td>
-                <td className="px-4 py-3">
-                  <span className="status-badge inline-flex items-center gap-2 px-3 py-1 rounded-full bg-yellow-500 text-black font-semibold text-sm">
-                    {pedido.status}
-                  </span>
-                </td>
-                <td className="px-4 py-3 flex justify-around">
-                  <button
-                    className="bg-green-600 rounded hover:bg-green-700 px-4 py-2 text-white font-semibold shadow"
-                    onClick={() => handleOrderAction(pedido.id, 'finish')}
-                  >
-                    Finalizar
-                  </button>
-                  <button
-                    className="bg-red-600 rounded hover:bg-red-700 px-4 py-2 text-white font-semibold shadow"
-                    onClick={() => handleOrderAction(pedido.id, 'cancel')}
-                  >
-                    Cancelar
-                  </button>
-                </td>
-              </tr>
-            ))}
+            {pedidos.map((pedido) => {
+              // Tradução simples do status (adicione mais conforme precisar)
+              const traduzirStatus = (status) => {
+                switch (status) {
+                  case 'in_preparation':
+                    return 'Em preparação';
+                  case 'finished':
+                    return 'Finalizado';
+                  case 'canceled':
+                    return 'Cancelado';
+                  default:
+                    return status;
+                }
+              };
+
+              return (
+                <tr key={pedido.id}>
+                  <td className="px-4 py-3">{pedido.id}</td>
+                  <td className="px-4 py-3">
+                    {new Date(pedido.created_at).toLocaleString('pt-BR', {
+                      day: '2-digit',
+                      month: '2-digit',
+                      year: 'numeric',
+                      hour: '2-digit',
+                      minute: '2-digit',
+                    })}
+                  </td>
+                  <td className="px-4 py-3">
+                    <div>
+                      {(pedido.items || []).map((item, index) => (
+                        <div
+                          key={index}
+                          className="flex flex-col border-t border-gray-600 px-2 py-1"
+                        >
+                          <div className="flex justify-between">
+                            <span>{item.product_name}</span>
+                            <span className="font-bold">x{item.quantity}</span>
+                          </div>
+                          <div className="ml-4 text-gray-300 text-sm">
+                            {item.optionals && item.optionals.length > 0 ? (
+                              <ul className="list-disc list-inside">
+                                {item.optionals.map((opt) => (
+                                  <li key={opt.id}>
+                                    {opt.supply_name} (x{opt.quantity})
+                                  </li>
+                                ))}
+                              </ul>
+                            ) : (
+                              <em>Sem opcional.</em>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </td>
+                  <td className="px-4 py-3">{pedido.customer_name}</td>
+                  <td className="px-4 py-3">
+                    <span className="status-badge inline-flex items-center gap-2 px-3 py-1 rounded-full bg-yellow-500 text-black font-semibold text-sm">
+                      {traduzirStatus(pedido.status)}
+                    </span>
+                  </td>
+                  <td className="px-4 py-3 flex justify-around">
+                    <button
+                      className="bg-green-600 rounded hover:bg-green-700 px-4 py-2 text-white font-semibold shadow"
+                      onClick={() => handleOrderAction(pedido.id, 'finish')}
+                    >
+                      Finalizar
+                    </button>
+                    <button
+                      className="bg-red-600 rounded hover:bg-red-700 px-4 py-2 text-white font-semibold shadow"
+                      onClick={() => handleOrderAction(pedido.id, 'cancel')}
+                    >
+                      Cancelar
+                    </button>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
