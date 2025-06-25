@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 export default function AdminOrders() {
   const [pedidos, setPedidos] = useState([]);
@@ -36,12 +38,17 @@ export default function AdminOrders() {
         body: new URLSearchParams({ order_id: id, action }),
       });
       const data = await res.json();
-      alert(data.message);
+      if (data.success) {
+        toast.success(data.message);
+        fetchOrders();
+      } else {
+        toast.error(data.message || 'Erro ao processar pedido');
+      }
     } catch (err) {
       console.error(err);
-      alert('Erro ao processar pedido');
+      toast.error('Erro ao processar pedido');
     }
-  }
+  };
 
   const handleMassAction = async (action) => {
     if (!window.confirm(`Tem certeza que deseja ${action === 'finish_all' ? 'FINALIZAR' : 'CANCELAR'} TODOS os pedidos?`)) return;
@@ -53,13 +60,17 @@ export default function AdminOrders() {
         body: new URLSearchParams({ action }),
       });
       const data = await res.json();
-      alert(data.message);
+      if (data.success) {
+        toast.success(data.message);
+        fetchOrders();
+      } else {
+        toast.error(data.message || 'Erro ao processar ação em massa');
+      }
     } catch (err) {
       console.error(err);
-      alert('Erro ao processar ação em massa');
+      toast.error('Erro ao processar ação em massa');
     }
   };
-
 
   return (
     <>
@@ -99,7 +110,6 @@ export default function AdminOrders() {
           </thead>
           <tbody className="divide-y divide-gray-700">
             {pedidos.map((pedido) => {
-              // Tradução simples do status (adicione mais conforme precisar)
               const traduzirStatus = (status) => {
                 switch (status) {
                   case 'in_preparation':
@@ -179,6 +189,8 @@ export default function AdminOrders() {
           </tbody>
         </table>
       </div>
+
+      <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} />
     </>
   );
 }

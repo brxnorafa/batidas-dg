@@ -1,4 +1,7 @@
 import { useState, useEffect } from "react";
+import { ToastContainer, toast } from "react-toastify";
+import 'react-toastify/dist/ReactToastify.css';
+
 
 export default function AdminWhatsapp() {
   const instanceId = "LITE-CPR8X2-C38SH4";
@@ -12,6 +15,9 @@ export default function AdminWhatsapp() {
   const [profileName, setProfileName] = useState("");
   const [qrCode, setQrCode] = useState("");
   const [showModal, setShowModal] = useState(false);
+  const [imageLink, setImageLink] = useState("");
+  const [testImageLink, setTestImageLink] = useState("");
+
 
   const [messageMes, setMessageMes] = useState(
     "🎉 Olá {nome}, parabéns adiantado pelo seu aniversário! A equipe Batidas DG deseja tudo de bom pra você! 🥳"
@@ -95,16 +101,23 @@ export default function AdminWhatsapp() {
         { headers: { Authorization: `Bearer ${apiToken}` } }
       );
       await fetchInstanceStatus();
+      toast.success("Instância desconectada com sucesso!");
     } catch (err) {
       console.error(err);
       alert("Erro ao desconectar.");
     }
   };
 
+
   const buscarAniversariantes = async () => {
     try {
-      const res = await fetch("/php/birthday.php");
+      const res = await fetch("/php/birthday/birthday.php");
       const aniversariantes = await res.json();
+
+      if (!aniversariantes || aniversariantes.length === 0) {
+        toast.info("Nenhum aniversariante encontrado.");
+        return;
+      }
 
       for (const pessoa of aniversariantes) {
         let mensagem = null;
@@ -115,6 +128,7 @@ export default function AdminWhatsapp() {
         }
         if (!mensagem) continue;
 
+        // Envia texto
         await fetch(
           `https://api.w-api.app/v1/message/send-text?instanceId=${instanceId}`,
           {
@@ -130,18 +144,45 @@ export default function AdminWhatsapp() {
             }),
           }
         );
+
+        // Envia imagem se tiver
+        if (imageLink.trim() !== "") {
+          await fetch(
+            `https://api.w-api.app/v1/message/send-image?instanceId=${instanceId}`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${apiToken}`,
+              },
+              body: JSON.stringify({
+                phone: pessoa.telefone,
+                image: imageLink,
+                caption: "", // opcional
+                delayMessage: 15,
+              }),
+            }
+          );
+        }
       }
 
-      alert("Mensagens enviadas!");
+      toast.success("Mensagens enviadas!");
     } catch (err) {
       console.error(err);
-      alert("Erro ao buscar aniversariantes.");
+      toast.error("Erro ao buscar aniversariantes.");
     }
   };
 
+
+
   const sendTestMessage = async () => {
-    if (!testNumber || !testMessage) return alert("Preencha os campos");
+    if (!testNumber || !testMessage) {
+      toast.warn("Preencha o número e a mensagem.");
+      return;
+    }
+
     try {
+      // Envia texto
       await fetch(
         `https://api.w-api.app/v1/message/send-text?instanceId=${instanceId}`,
         {
@@ -153,16 +194,38 @@ export default function AdminWhatsapp() {
           body: JSON.stringify({
             phone: testNumber,
             message: testMessage,
-            delayMessage: 15,
+            delayMessage: 5,
           }),
         }
       );
-      alert("Mensagem enviada!");
+
+      // Envia imagem se testImageLink estiver preenchido
+      if (testImageLink.trim() !== "") {
+        await fetch(
+          `https://api.w-api.app/v1/message/send-image?instanceId=${instanceId}`,
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${apiToken}`,
+            },
+            body: JSON.stringify({
+              phone: testNumber,
+              image: testImageLink,
+              caption: "", // ou testMessage se quiser como legenda
+              delayMessage: 5,
+            }),
+          }
+        );
+      }
+
+      toast.success("Mensagem enviada!");
       setTestNumber("");
       setTestMessage("");
+      setTestImageLink("");
     } catch (err) {
       console.error(err);
-      alert("Erro ao enviar.");
+      toast.error("Erro ao enviar mensagem.");
     }
   };
 
@@ -203,8 +266,8 @@ export default function AdminWhatsapp() {
             <button
               onClick={() => setSubTab("status")}
               className={`px-4 py-2 font-medium transition border-b-2 ${subTab === "status"
-                  ? "border-purple-400 text-white"
-                  : "border-transparent text-purple-300 hover:text-white"
+                ? "border-purple-400 text-white"
+                : "border-transparent text-purple-300 hover:text-white"
                 }`}
             >
               Status
@@ -212,8 +275,8 @@ export default function AdminWhatsapp() {
             <button
               onClick={() => setSubTab("config")}
               className={`px-4 py-2 font-medium transition border-b-2 ${subTab === "config"
-                  ? "border-purple-400 text-white"
-                  : "border-transparent text-purple-300 hover:text-white"
+                ? "border-purple-400 text-white"
+                : "border-transparent text-purple-300 hover:text-white"
                 }`}
             >
               Configurações
@@ -292,8 +355,11 @@ export default function AdminWhatsapp() {
           )}
 
           {subTab === "config" && (
-            <div className="bg-gray-800 rounded-xl p-6 shadow-lg space-y-4">
+            <div className="bg-gray-800 rounded-xl p-6 shadow-lg space-y-6">
               <div>
+                <p className="text-yellow-300 text-sm mb-2">
+                  ⚠️ Você pode usar <code className="bg-gray-700 px-1 py-0.5 rounded">{`{nome}`}</code> para inserir automaticamente o nome do aniversariante na mensagem.
+                </p>
                 <p className="mb-1 text-yellow-400 font-semibold">
                   Mensagem para aniversariantes daqui 1 mês:
                 </p>
@@ -315,6 +381,18 @@ export default function AdminWhatsapp() {
                   className="w-full p-3 rounded bg-gray-700 text-white"
                 />
               </div>
+              <div>
+                <p className="text-yellow-300 text-sm mb-2">
+                  ⚠️ O link abaixo será usado como imagem nas mensagens de aniversário. Deve ser um link direto para imagem (<code>.jpg</code>, <code>.png</code>, etc).
+                </p>
+                <input
+                  type="text"
+                  placeholder="https://exemplo.com/imagem.jpg"
+                  value={imageLink}
+                  onChange={(e) => setImageLink(e.target.value)}
+                  className="w-full p-3 rounded bg-gray-700 text-white"
+                />
+              </div>
             </div>
           )}
         </>
@@ -324,18 +402,28 @@ export default function AdminWhatsapp() {
         <div className="bg-gray-800 rounded-xl p-6 shadow-lg space-y-4">
           <input
             type="text"
-            placeholder="Número com DDI e DDD"
+            placeholder="📞 Número com DDI e DDD (ex: 5511999999999)"
             value={testNumber}
             onChange={(e) => setTestNumber(e.target.value)}
             className="w-full p-3 rounded bg-gray-700 text-white"
           />
+
           <input
             type="text"
-            placeholder="Mensagem"
+            placeholder="💬 Mensagem de teste"
             value={testMessage}
             onChange={(e) => setTestMessage(e.target.value)}
             className="w-full p-3 rounded bg-gray-700 text-white"
           />
+
+          <input
+            type="text"
+            placeholder="🖼️ Link da imagem para teste (opcional)"
+            value={testImageLink}
+            onChange={(e) => setTestImageLink(e.target.value)}
+            className="w-full p-3 rounded bg-gray-700 text-white"
+          />
+
           <button
             onClick={sendTestMessage}
             className="w-full bg-green-600 hover:bg-green-700 py-3 rounded font-semibold"
@@ -367,6 +455,8 @@ export default function AdminWhatsapp() {
           </div>
         </div>
       )}
+
+      <ToastContainer position="top-right" autoClose={3000} hideProgressBar={false} />
     </div>
   );
 }
