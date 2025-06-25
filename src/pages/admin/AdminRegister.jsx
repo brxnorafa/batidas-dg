@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 
 export default function AdminRegister() {
+  const [activeTab, setActiveTab] = useState("listar");
+
   const [username, setUsername] = useState("");
   const [name, setName] = useState("");
   const [role, setRole] = useState("orders");
@@ -9,10 +11,11 @@ export default function AdminRegister() {
 
   const [usuarios, setUsuarios] = useState([]);
 
-  // Carregar funcionários
   useEffect(() => {
-    carregarUsuarios();
-  }, []);
+    if (activeTab === "listar") {
+      carregarUsuarios();
+    }
+  }, [activeTab]);
 
   const carregarUsuarios = async () => {
     try {
@@ -80,8 +83,8 @@ export default function AdminRegister() {
         setUsername("");
         setName("");
         setPassword("");
-        setRole("employee");
-        carregarUsuarios();
+        setRole("orders");
+        if (activeTab === "listar") carregarUsuarios();
       } else {
         setStatus(data.message || "Erro ao cadastrar.");
       }
@@ -92,85 +95,114 @@ export default function AdminRegister() {
 
   return (
     <div className="max-w-5xl mx-auto bg-gray-900 p-8 rounded-lg text-white">
-      <h2 className="text-3xl mb-6 font-bold text-center">Funcionários Cadastrados</h2>
+      <h1 className="text-3xl font-bold mb-6 text-center">Gerenciar Funcionários</h1>
 
-      <div className="overflow-x-auto rounded-lg shadow mb-10">
-        <table className="min-w-full text-white border border-gray-700 rounded overflow-hidden">
-          <thead className="bg-gray-800 text-white">
-            <tr>
-              <th className="px-4 py-3 text-left">ID</th>
-              <th className="px-4 py-3 text-left">Usuário</th>
-              <th className="px-4 py-3 text-left">Nome Completo</th>
-              <th className="px-4 py-3 text-left">Função</th>
-              <th className="px-4 py-3 text-left">Ações</th>
-            </tr>
-          </thead>
-          <tbody>
-            {usuarios.map((user) => (
-              <tr key={user.id} className="border-t border-gray-700 hover:bg-gray-800">
-                <td className="px-4 py-2">{user.id}</td>
-                <td className="px-4 py-2">{user.username}</td>
-                <td className="px-4 py-2">{user.name}</td>
-                <td className="px-4 py-2">{traduzRole(user.role)}</td>
-                <td className="px-4 py-2 space-x-2">
-                  <button
-                    onClick={() => handleDelete(user.id)}
-                    className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded font-semibold text-sm"
-                  >
-                    Excluir
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      <h2 className="text-3xl mb-6 font-bold text-center">Cadastrar Funcionário</h2>
-
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-        <input
-          type="text"
-          placeholder="Usuário (username)"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
-          className="p-3 rounded bg-gray-800 border border-gray-700 focus:ring-2 focus:ring-green-600"
-          required
-        />
-        <input
-          type="text"
-          placeholder="Nome completo"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          className="p-3 rounded bg-gray-800 border border-gray-700 focus:ring-2 focus:ring-green-600"
-          required
-        />
-        <input
-          type="password"
-          placeholder="Senha"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          className="p-3 rounded bg-gray-800 border border-gray-700 focus:ring-2 focus:ring-green-600"
-          required
-        />
-        <select
-          value={role}
-          onChange={(e) => setRole(e.target.value)}
-          className="p-3 rounded bg-gray-800 border border-gray-700 focus:ring-2 focus:ring-green-600"
-        >
-          <option value="administrator">Administrador</option>
-          <option value="orders">Pedidos</option>
-          <option value="checkin">Portaria</option>
-        </select>
+      {/* Tabs */}
+      <div className="flex mb-6 border border-purple-500 rounded-lg overflow-hidden">
         <button
-          type="submit"
-          className="bg-green-600 py-3 rounded font-semibold hover:bg-green-700 transition"
+          onClick={() => setActiveTab("listar")}
+          className={`flex-1 py-3 font-semibold text-center transition ${activeTab === "listar"
+              ? "bg-purple-500 text-white"
+              : "bg-gray-800 text-purple-400 hover:bg-purple-600 hover:text-white"
+            }`}
+        >
+          Funcionários
+        </button>
+        <button
+          onClick={() => setActiveTab("registrar")}
+          className={`flex-1 py-3 font-semibold text-center transition ${activeTab === "registrar"
+              ? "bg-purple-500 text-white"
+              : "bg-gray-800 text-purple-400 hover:bg-purple-600 hover:text-white"
+            }`}
         >
           Cadastrar
         </button>
-      </form>
+      </div>
 
-      {status && <p className="mt-6 text-center text-green-400 font-medium">{status}</p>}
+      {/* Conteúdo */}
+      {activeTab === "listar" && (
+        <div className="overflow-x-auto rounded-lg shadow mb-10">
+          <table className="min-w-full text-white border border-gray-700 rounded overflow-hidden">
+            <thead className="bg-gray-800 text-white">
+              <tr>
+                <th className="px-4 py-3 text-left">ID</th>
+                <th className="px-4 py-3 text-left">Usuário</th>
+                <th className="px-4 py-3 text-left">Nome Completo</th>
+                <th className="px-4 py-3 text-left">Função</th>
+                <th className="px-4 py-3 text-left">Ações</th>
+              </tr>
+            </thead>
+            <tbody>
+              {usuarios.map((user) => (
+                <tr key={user.id} className="border-t border-gray-700 hover:bg-gray-800">
+                  <td className="px-4 py-2">{user.id}</td>
+                  <td className="px-4 py-2">{user.username}</td>
+                  <td className="px-4 py-2">{user.name}</td>
+                  <td className="px-4 py-2">{traduzRole(user.role)}</td>
+                  <td className="px-4 py-2 space-x-2">
+                    <button
+                      onClick={() => handleDelete(user.id)}
+                      className="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded font-semibold text-sm"
+                    >
+                      Excluir
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {activeTab === "registrar" && (
+        <div>
+          <h2 className="text-2xl mb-4 font-bold text-center">Cadastrar Novo Funcionário</h2>
+
+          <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+            <input
+              type="text"
+              placeholder="Usuário (username)"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              className="p-3 rounded bg-gray-800 border border-gray-700 focus:ring-2 focus:ring-green-600"
+              required
+            />
+            <input
+              type="text"
+              placeholder="Nome completo"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="p-3 rounded bg-gray-800 border border-gray-700 focus:ring-2 focus:ring-green-600"
+              required
+            />
+            <input
+              type="password"
+              placeholder="Senha"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="p-3 rounded bg-gray-800 border border-gray-700 focus:ring-2 focus:ring-green-600"
+              required
+            />
+            <select
+              value={role}
+              onChange={(e) => setRole(e.target.value)}
+              className="p-3 rounded bg-gray-800 border border-gray-700 focus:ring-2 focus:ring-green-600"
+            >
+              <option value="administrator">Administrador</option>
+              <option value="orders">Pedidos</option>
+              <option value="checkin">Portaria</option>
+            </select>
+            <button
+              type="submit"
+              className="bg-green-600 py-3 rounded font-semibold hover:bg-green-700 transition"
+            >
+              Cadastrar
+            </button>
+          </form>
+
+          {status && <p className="mt-6 text-center text-green-400 font-medium">{status}</p>}
+        </div>
+      )}
     </div>
   );
 }
