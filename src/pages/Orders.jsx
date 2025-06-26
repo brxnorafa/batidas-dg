@@ -1,12 +1,13 @@
 import { useState, useEffect } from "react";
 
 const formasPagamento = [
-  "Cartão Crédito",
-  "Cartão Débito",
-  "Pix",
-  "Fiado",
-  "Dinheiro",
+  { label: "Cartão Crédito", value: "credito" },
+  { label: "Cartão Débito", value: "debito" },
+  { label: "Pix", value: "pix" },
+  { label: "Fiado", value: "fiado" },
+  { label: "Dinheiro", value: "dinheiro" },
 ];
+
 
 function ModalPagamento({ onConfirm }) {
   return (
@@ -484,8 +485,8 @@ export default function Orders() {
               onChange={(e) => setPagamento(e.target.value)}
             >
               {formasPagamento.map((f) => (
-                <option key={f} value={f}>
-                  {f}
+                <option key={f.value} value={f.value}>
+                  {f.label}
                 </option>
               ))}
             </select>

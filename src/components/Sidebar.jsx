@@ -14,6 +14,7 @@ export default function Sidebar() {
     { key: 'supplies', nome: 'Insumos', icone: 'fa-circle-info' },
     { key: 'stock', nome: 'Estoque', icone: 'fa-boxes-stacked' },
     { key: 'products', nome: 'Produtos', icone: 'fa-bottle-water' },
+    { key: 'reports', nome: 'Relatórios', icone: 'fa-file-pdf' },
   ];
 
 

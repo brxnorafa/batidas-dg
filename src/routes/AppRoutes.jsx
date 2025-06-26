@@ -8,6 +8,7 @@ import AdminWhatsapp from '../pages/admin/AdminWhatsapp';
 import AdminSupplies from '../pages/admin/AdminSupplies';
 import AdminStock from '../pages/admin/AdminStock';
 import AdminProducts from '../pages/admin/AdminProducts';
+import AdminReports from '../pages/admin/AdminReports';
 import { useAuth } from '../contexts/AuthContext';
 
 export default function AppRoutes() {
@@ -27,6 +28,7 @@ export default function AppRoutes() {
         <Route path="supplies" element={<AdminSupplies />} />
         <Route path="stock" element={<AdminStock />} />
         <Route path="products" element={<AdminProducts />} />
+        <Route path="reports" element={<AdminReports />} />
       </Route>
 
       <Route

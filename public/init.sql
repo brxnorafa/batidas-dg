@@ -96,6 +96,14 @@ CREATE TABLE product_optional_supplies (
   FOREIGN KEY (supply_id) REFERENCES supplies(id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
+-- Entradas
+CREATE TABLE `check_ins` (
+   `id` int(11) NOT NULL AUTO_INCREMENT,
+   `cpf` varchar(14) DEFAULT NULL,
+   `check_in_date` date DEFAULT NULL,
+   PRIMARY KEY (`id`)
+ ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
 -- Pagamentos relacionados a pedidos
 CREATE TABLE payments (
   id INT PRIMARY KEY AUTO_INCREMENT,
