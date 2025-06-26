@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { jsPDF } from "jspdf";
+import avatar_dg from '../../assets/avatar_dg.png';
 
 export default function AdminReports() {
   const [activeTab, setActiveTab] = useState("hoje");
@@ -37,16 +38,13 @@ export default function AdminReports() {
     const doc = new jsPDF();
 
     // --- HEADER ---
-
-    const avatar1 = "/avatar_dg.png";
-
     const pageWidth = doc.internal.pageSize.getWidth();
     const imgSize = 30;
     const centerX = pageWidth / 2;
     const yImg = 15;
 
     // Colocar avatar1 centralizado
-    doc.addImage(avatar1, "JPEG", centerX - imgSize / 2, yImg, imgSize, imgSize);
+    doc.addImage(avatar_dg, "JPEG", centerX - imgSize / 2, yImg, imgSize, imgSize);
 
     // Linha horizontal abaixo do header
     doc.setDrawColor(75, 0, 130);
