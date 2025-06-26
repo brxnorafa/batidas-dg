@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from '../contexts/AuthContext';
+import avatar_dg from '../assets/avatar_dg.png';
 
 export default function Sidebar() {
   const [open, setOpen] = useState(false);
@@ -35,7 +36,7 @@ export default function Sidebar() {
     >
       <div className="p-3">
         <div className="flex items-center gap-2 mb-6 overflow-hidden">
-          <img src='/avatar_dg.png' className="w-12 h-12 object-cover rounded-xl" alt="Avatar" />
+          <img src={avatar_dg} className="w-12 h-12 object-cover rounded-xl" alt="Avatar" />
           <div
             className={`transition-opacity duration-300 whitespace-nowrap ${
               open ? 'opacity-100' : 'opacity-0'

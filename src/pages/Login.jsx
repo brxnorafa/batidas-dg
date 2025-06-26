@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { User, Lock } from "lucide-react";
+import avatar_dg from '../assets/avatar_dg.png';
 
 export default function LoginPage() {
     const [username, setUsername] = useState('');
@@ -46,7 +47,7 @@ export default function LoginPage() {
                 {/* Logo */}
                 <div className="mb-4 w-24 h-24 flex items-center justify-center rounded-full border-2 border-purple-400 p-2">
                     <img
-                        src="/avatar_dg.png"
+                        src={avatar_dg}
                         alt="Logotipo"
                         className="w-full h-full object-cover rounded-full"
                     />

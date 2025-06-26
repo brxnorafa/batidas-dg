@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-
+import avatar_softwave from '../assets/avatar_softwave.png';
 const formasPagamento = [
   { label: "Cartão Crédito", value: "credito" },
   { label: "Cartão Débito", value: "debito" },
@@ -249,7 +249,7 @@ export default function Orders() {
   return (
     <div className="min-h-screen bg-gray-900 p-5 pb-24">
       <img
-        src="/avatar_softwave.png"
+        src={avatar_softwave}
         alt="Logo Softwave"
         className="mx-auto h-12 mb-4"
       />
