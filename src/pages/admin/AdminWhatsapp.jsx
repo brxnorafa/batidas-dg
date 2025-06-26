@@ -122,9 +122,9 @@ export default function AdminWhatsapp() {
       for (const pessoa of aniversariantes) {
         let mensagem = null;
         if (pessoa.tipo === "mes") {
-          mensagem = messageMes.replace("{nome}", pessoa.nome);
+          mensagem = messageMes.replace("{nome}", pessoa.name);
         } else if (pessoa.tipo === "quinze") {
-          mensagem = messageQuinze.replace("{nome}", pessoa.nome);
+          mensagem = messageQuinze.replace("{nome}", pessoa.name);
         }
         if (!mensagem) continue;
 
@@ -138,7 +138,7 @@ export default function AdminWhatsapp() {
               Authorization: `Bearer ${apiToken}`,
             },
             body: JSON.stringify({
-              phone: pessoa.telefone,
+              phone: pessoa.phone,
               message: mensagem,
               delayMessage: 15,
             }),
@@ -156,7 +156,7 @@ export default function AdminWhatsapp() {
                 Authorization: `Bearer ${apiToken}`,
               },
               body: JSON.stringify({
-                phone: pessoa.telefone,
+                phone: pessoa.phone,
                 image: imageLink,
                 caption: "", // opcional
                 delayMessage: 15,
