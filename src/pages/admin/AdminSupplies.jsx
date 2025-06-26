@@ -1,4 +1,6 @@
 import { useState, useEffect } from "react";
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 export default function AdminSupplies() {
   const [activeTab, setActiveTab] = useState("cadastrar");
@@ -16,7 +18,6 @@ export default function AdminSupplies() {
     i.name.toLowerCase().includes(filtroInsumos.toLowerCase())
   );
 
-
   // State edição
   const [editId, setEditId] = useState(null);
 
@@ -29,7 +30,7 @@ export default function AdminSupplies() {
 
   const cadastrarInsumo = async () => {
     if (!nome.trim() || !unidade.trim()) {
-      return alert("Preencha o nome e a unidade!");
+      return toast.warn("Preencha o nome e a unidade!");
     }
 
     try {
@@ -45,13 +46,15 @@ export default function AdminSupplies() {
       });
 
       const data = await res.json();
-      alert(data.message);
       if (data.success) {
+        toast.success(data.message);
         limparFormulario();
         buscarInsumos();
+      } else {
+        toast.error(data.message || "Erro ao cadastrar insumo.");
       }
     } catch (err) {
-      alert("Erro: " + err.message);
+      toast.error("Erro: " + err.message);
     }
   };
 
@@ -62,10 +65,10 @@ export default function AdminSupplies() {
       if (data.success) {
         setInsumos(data.insumos);
       } else {
-        alert(data.message);
+        toast.error(data.message || "Erro ao buscar insumos.");
       }
     } catch (err) {
-      alert("Erro: " + err.message);
+      toast.error("Erro: " + err.message);
     }
   };
 
@@ -79,7 +82,7 @@ export default function AdminSupplies() {
 
   const editarInsumo = async () => {
     if (!nome.trim() || !unidade.trim()) {
-      return alert("Preencha o nome e a unidade!");
+      return toast.warn("Preencha o nome e a unidade!");
     }
 
     try {
@@ -94,29 +97,35 @@ export default function AdminSupplies() {
       });
 
       const data = await res.json();
-      alert(data.message);
       if (data.success) {
+        toast.success(data.message);
         limparFormulario();
         buscarInsumos();
         setActiveTab("listar");
+      } else {
+        toast.error(data.message || "Erro ao editar insumo.");
       }
     } catch (err) {
-      alert("Erro: " + err.message);
+      toast.error("Erro: " + err.message);
     }
   };
 
   const excluirInsumo = async (id) => {
-    if (!confirm("Tem certeza que deseja excluir esse insumo?")) return;
+    if (!window.confirm("Tem certeza que deseja excluir esse insumo?")) return;
 
     try {
       const res = await fetch(`/php/supplies/supplies.php?id=${id}`, {
         method: "DELETE",
       });
       const data = await res.json();
-      alert(data.message);
-      if (data.success) buscarInsumos();
+      if (data.success) {
+        toast.success(data.message);
+        buscarInsumos();
+      } else {
+        toast.error(data.message || "Erro ao excluir insumo.");
+      }
     } catch (err) {
-      alert("Erro: " + err.message);
+      toast.error("Erro: " + err.message);
     }
   };
 
@@ -254,6 +263,7 @@ export default function AdminSupplies() {
           </div>
         )}
       </div>
+      <ToastContainer/>
     </div>
   );
 }
