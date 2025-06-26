@@ -192,11 +192,10 @@ export default function Orders() {
       }
     });
 
-    // Monta o objeto do pedido
     const pedido = {
       clienteNome,
-      pagamento,
-      total: total.toFixed(2), // <-- total incluído aqui
+      pagamento: pagamento.value,
+      total: total.toFixed(2),
       itens: Object.values(carrinho).map(({ produto, quantidade, opcionais }) => ({
         produtoId: produto.id,
         quantidade,
@@ -226,6 +225,7 @@ export default function Orders() {
         alert("Erro ao finalizar pedido: " + (data.message || "Desconhecido"));
       }
     } catch (err) {
+      console.error("Erro na comunicação com o servidor:", err);
       alert("Erro na comunicação com o servidor.");
     }
   };

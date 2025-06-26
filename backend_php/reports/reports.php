@@ -34,23 +34,30 @@ try {
         SELECT 
             payment_method,
             SUM(amount) AS total
-        FROM payments
+        FROM payments   
         $wherePagamentos
         GROUP BY payment_method";
     $stmtPag = $pdo->query($sqlPagamentos);
-    $pagamentos = [
-        'Cartão Crédito' => 0,
-        'Cartão Débito' => 0,
-        'Pix' => 0,
-        'Fiado' => 0,
-        'Dinheiro' => 0,
+
+    // Mapeamento dos métodos do banco para labels amigáveis
+    $mapaPagamento = [
+        'credito' => 'Cartão Crédito',
+        'debito' => 'Cartão Débito',
+        'pix' => 'Pix',
+        'fiado' => 'Fiado',
+        'dinheiro' => 'Dinheiro',
     ];
+
+    // Inicializa o array de pagamentos com as labels e zero
+    $pagamentos = array_fill_keys(array_values($mapaPagamento), 0);
+
     $valorTotal = 0;
     foreach ($stmtPag as $row) {
-        $metodo = $row['payment_method'];
+        $metodoBanco = $row['payment_method'];
         $valor = (float)$row['total'];
-        if (isset($pagamentos[$metodo])) {
-            $pagamentos[$metodo] += $valor;
+        if (isset($mapaPagamento[$metodoBanco])) {
+            $label = $mapaPagamento[$metodoBanco];
+            $pagamentos[$label] += $valor;
         }
         $valorTotal += $valor;
     }
