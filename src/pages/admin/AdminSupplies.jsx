@@ -137,8 +137,8 @@ export default function AdminSupplies() {
             key={tab}
             disabled={tab === "editar" && editId === null}
             className={`flex-1 py-3 text-center font-semibold transition ${activeTab === tab
-                ? "bg-purple-500 text-white"
-                : "bg-gray-800 text-purple-400 hover:bg-purple-600 hover:text-white"
+              ? "bg-purple-500 text-white"
+              : "bg-gray-800 text-purple-400 hover:bg-purple-600 hover:text-white"
               } ${tab === "editar" && editId === null ? "opacity-50 cursor-not-allowed" : ""}`}
             onClick={() => setActiveTab(tab)}
           >
@@ -178,9 +178,13 @@ export default function AdminSupplies() {
             {activeTab === "cadastrar" && (
               <input
                 type="number"
-                placeholder="Quantidade"
+                placeholder="Quantidade inicial no estoque"
                 value={quantidade}
-                onChange={(e) => setQuantidade(e.target.value)}
+                onChange={(e) => {
+                  const value = Number(e.target.value);
+                  setQuantidade(value < 0 ? 0 : value);
+                }}
+                min={0}
                 className="w-full p-3 rounded bg-gray-700 text-white"
               />
             )}
