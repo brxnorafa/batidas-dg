@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 export default function Portaria() {
   const [nome, setNome] = useState("");
@@ -12,15 +14,14 @@ export default function Portaria() {
   const [activeTab, setActiveTab] = useState("entradas");
 
   function formatarCPF(valor) {
-    valor = valor.replace(/\D/g, ""); // Remove tudo que não for número
-    valor = valor.slice(0, 11); // Limita a 11 dígitos
+    valor = valor.replace(/\D/g, "");
+    valor = valor.slice(0, 11);
     if (valor.length <= 3) return valor;
     if (valor.length <= 6) return valor.replace(/(\d{3})(\d+)/, "$1.$2");
     if (valor.length <= 9) return valor.replace(/(\d{3})(\d{3})(\d+)/, "$1.$2.$3");
     return valor.replace(/(\d{3})(\d{3})(\d{3})(\d{1,2})/, "$1.$2.$3-$4");
   }
 
-  // Validação CPF
   function validarCPF(cpf) {
     cpf = cpf.replace(/[^\d]+/g, "");
     if (cpf.length !== 11 || /^(\d)\1+$/.test(cpf)) return false;
@@ -40,15 +41,12 @@ export default function Portaria() {
     return cpf.replace(/\D/g, "");
   }
 
-
-  // Handlers
-  // 📤 Cadastrar Cliente
   async function cadastrarCliente() {
     if (!nome.trim() || !telefone.trim() || !cpf.trim() || !nascimento.trim()) {
-      return alert("Preencha todos os campos!");
+      return toast.warn("Preencha todos os campos!");
     }
     if (!validarCPF(cpf)) {
-      return alert("CPF inválido!");
+      return toast.error("CPF inválido!");
     }
 
     try {
@@ -65,23 +63,23 @@ export default function Portaria() {
       });
 
       const data = await res.json();
-      alert(data.message);
-
       if (data.success) {
+        toast.success(data.message);
         setNome("");
         setTelefone("");
         setCpf("");
         setNascimento("");
+      } else {
+        toast.error(data.message);
       }
     } catch (err) {
-      alert("Erro na comunicação: " + err.message);
+      toast.error("Erro na comunicação: " + err.message);
     }
   }
 
-  // 📥 Registrar Entrada
   async function registrarEntrada() {
     if (!cpfEntrada.trim()) {
-      return alert("Informe o CPF!");
+      return toast.warn("Informe o CPF!");
     }
 
     try {
@@ -94,19 +92,21 @@ export default function Portaria() {
         }),
       });
 
-
       const data = await res.json();
-      alert(data.message);
-      setCpfEntrada("");
+      if (data.success) {
+        toast.success(data.message);
+        setCpfEntrada("");
+      } else {
+        toast.info(data.message); // Pode ser "já registrou hoje", etc
+      }
     } catch (err) {
-      alert("Erro: " + err.message);
+      toast.error("Erro: " + err.message);
     }
   }
 
-  // 🔍 Verificar Entrada
   async function verificarEntrada() {
     if (!cpfVerificar.trim()) {
-      return alert("Informe o CPF!");
+      return toast.warn("Informe o CPF!");
     }
 
     try {
@@ -115,35 +115,53 @@ export default function Portaria() {
       });
 
       const data = await res.json();
-      alert(data.message);
+      if (data.success) {
+        toast.success(data.message);
+      } else {
+        toast.error(data.message);
+      }
       setCpfVerificar("");
     } catch (err) {
-      alert("Erro: " + err.message);
+      toast.error("Erro: " + err.message);
     }
   }
 
-
   return (
     <div className="min-h-screen bg-gray-900 flex flex-col items-center p-5">
+      <ToastContainer
+        position="top-center"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="colored"
+      />
+
       <h1 className="text-white text-3xl font-bold mb-8">Área de Portaria</h1>
 
       {/* Tabs */}
       <div className="flex w-full max-w-md mb-8 rounded-lg overflow-hidden border border-yellow-400">
         <button
-          className={`flex-1 py-3 text-center font-semibold transition ${activeTab === "entradas"
-            ? "bg-yellow-400 text-gray-900"
-            : "bg-gray-800 text-yellow-400 hover:bg-yellow-600 hover:text-gray-100"
-            }`}
+          className={`flex-1 py-3 text-center font-semibold transition ${
+            activeTab === "entradas"
+              ? "bg-yellow-400 text-gray-900"
+              : "bg-gray-800 text-yellow-400 hover:bg-yellow-600 hover:text-gray-100"
+          }`}
           onClick={() => setActiveTab("entradas")}
           type="button"
         >
           Entradas
         </button>
         <button
-          className={`flex-1 py-3 text-center font-semibold transition ${activeTab === "cadastro"
-            ? "bg-yellow-400 text-gray-900"
-            : "bg-gray-800 text-yellow-400 hover:bg-yellow-600 hover:text-gray-100"
-            }`}
+          className={`flex-1 py-3 text-center font-semibold transition ${
+            activeTab === "cadastro"
+              ? "bg-yellow-400 text-gray-900"
+              : "bg-gray-800 text-yellow-400 hover:bg-yellow-600 hover:text-gray-100"
+          }`}
           onClick={() => setActiveTab("cadastro")}
           type="button"
         >
