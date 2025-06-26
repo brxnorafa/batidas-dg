@@ -290,7 +290,7 @@ export default function Orders() {
       {/* Passo 1 */}
       {step === 1 && (
         <div className="max-w-3xl mx-auto space-y-4">
-          <div className="flex gap-4 mb-4">
+          <div className="flex flex-col sm:flex-row gap-4 mb-4">
             {/* Filtro Categoria */}
             <select
               className="bg-gray-800 text-white p-2 rounded flex-grow"
