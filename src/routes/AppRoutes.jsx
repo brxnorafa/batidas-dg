@@ -1,6 +1,7 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import Login from '../pages/Login';
 import Orders from '../pages/Orders';
+import Portaria from '../pages/Portaria';
 import AdminOrders from '../pages/admin/AdminOrders';
 import AdminRegister from '../pages/admin/AdminRegister';
 import AdminLayout from '../layouts/AdminLayout'; 

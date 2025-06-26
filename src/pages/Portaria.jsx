@@ -11,6 +11,15 @@ export default function Portaria() {
 
   const [activeTab, setActiveTab] = useState("entradas");
 
+  function formatarCPF(valor) {
+    valor = valor.replace(/\D/g, ""); // Remove tudo que não for número
+    valor = valor.slice(0, 11); // Limita a 11 dígitos
+    if (valor.length <= 3) return valor;
+    if (valor.length <= 6) return valor.replace(/(\d{3})(\d+)/, "$1.$2");
+    if (valor.length <= 9) return valor.replace(/(\d{3})(\d{3})(\d+)/, "$1.$2.$3");
+    return valor.replace(/(\d{3})(\d{3})(\d{3})(\d{1,2})/, "$1.$2.$3-$4");
+  }
+
   // Validação CPF
   function validarCPF(cpf) {
     cpf = cpf.replace(/[^\d]+/g, "");
@@ -27,85 +36,91 @@ export default function Portaria() {
     return resto === parseInt(cpf.charAt(10));
   }
 
+  function limparCPF(cpf) {
+    return cpf.replace(/\D/g, "");
+  }
+
+
   // Handlers
   // 📤 Cadastrar Cliente
-async function cadastrarCliente() {
-  if (!nome.trim() || !telefone.trim() || !cpf.trim() || !nascimento.trim()) {
-    return alert("Preencha todos os campos!");
-  }
-  if (!validarCPF(cpf)) {
-    return alert("CPF inválido!");
-  }
-
-  try {
-    const res = await fetch("/php/checkin/checkin.php", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        action: "cadastrar",
-        nome,
-        telefone,
-        cpf,
-        nascimento,
-      }),
-    });
-
-    const data = await res.json();
-    alert(data.message);
-
-    if (data.success) {
-      setNome("");
-      setTelefone("");
-      setCpf("");
-      setNascimento("");
+  async function cadastrarCliente() {
+    if (!nome.trim() || !telefone.trim() || !cpf.trim() || !nascimento.trim()) {
+      return alert("Preencha todos os campos!");
     }
-  } catch (err) {
-    alert("Erro na comunicação: " + err.message);
-  }
-}
+    if (!validarCPF(cpf)) {
+      return alert("CPF inválido!");
+    }
 
-// 📥 Registrar Entrada
-async function registrarEntrada() {
-  if (!cpfEntrada.trim()) {
-    return alert("Informe o CPF!");
-  }
+    try {
+      const res = await fetch("/php/checkin/checkin.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "cadastrar",
+          nome,
+          telefone,
+          cpf: limparCPF(cpf),
+          nascimento,
+        }),
+      });
 
-  try {
-    const res = await fetch("/php/checkin/checkin.php", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        action: "registrar",
-        cpf: cpfEntrada,
-      }),
-    });
+      const data = await res.json();
+      alert(data.message);
 
-    const data = await res.json();
-    alert(data.message);
-    setCpfEntrada("");
-  } catch (err) {
-    alert("Erro: " + err.message);
-  }
-}
-
-// 🔍 Verificar Entrada
-async function verificarEntrada() {
-  if (!cpfVerificar.trim()) {
-    return alert("Informe o CPF!");
+      if (data.success) {
+        setNome("");
+        setTelefone("");
+        setCpf("");
+        setNascimento("");
+      }
+    } catch (err) {
+      alert("Erro na comunicação: " + err.message);
+    }
   }
 
-  try {
-    const res = await fetch(`/php/checkin/checkin.php?cpf=${cpfVerificar}`, {
-      method: "GET",
-    });
+  // 📥 Registrar Entrada
+  async function registrarEntrada() {
+    if (!cpfEntrada.trim()) {
+      return alert("Informe o CPF!");
+    }
 
-    const data = await res.json();
-    alert(data.message);
-    setCpfVerificar("");
-  } catch (err) {
-    alert("Erro: " + err.message);
+    try {
+      const res = await fetch("/php/checkin/checkin.php", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          action: "registrar",
+          cpf: limparCPF(cpfEntrada),
+        }),
+      });
+
+
+      const data = await res.json();
+      alert(data.message);
+      setCpfEntrada("");
+    } catch (err) {
+      alert("Erro: " + err.message);
+    }
   }
-}
+
+  // 🔍 Verificar Entrada
+  async function verificarEntrada() {
+    if (!cpfVerificar.trim()) {
+      return alert("Informe o CPF!");
+    }
+
+    try {
+      const res = await fetch(`/php/checkin/checkin.php?cpf=${limparCPF(cpfVerificar)}`, {
+        method: "GET",
+      });
+
+      const data = await res.json();
+      alert(data.message);
+      setCpfVerificar("");
+    } catch (err) {
+      alert("Erro: " + err.message);
+    }
+  }
 
 
   return (
@@ -115,22 +130,20 @@ async function verificarEntrada() {
       {/* Tabs */}
       <div className="flex w-full max-w-md mb-8 rounded-lg overflow-hidden border border-yellow-400">
         <button
-          className={`flex-1 py-3 text-center font-semibold transition ${
-            activeTab === "entradas"
-              ? "bg-yellow-400 text-gray-900"
-              : "bg-gray-800 text-yellow-400 hover:bg-yellow-600 hover:text-gray-100"
-          }`}
+          className={`flex-1 py-3 text-center font-semibold transition ${activeTab === "entradas"
+            ? "bg-yellow-400 text-gray-900"
+            : "bg-gray-800 text-yellow-400 hover:bg-yellow-600 hover:text-gray-100"
+            }`}
           onClick={() => setActiveTab("entradas")}
           type="button"
         >
           Entradas
         </button>
         <button
-          className={`flex-1 py-3 text-center font-semibold transition ${
-            activeTab === "cadastro"
-              ? "bg-yellow-400 text-gray-900"
-              : "bg-gray-800 text-yellow-400 hover:bg-yellow-600 hover:text-gray-100"
-          }`}
+          className={`flex-1 py-3 text-center font-semibold transition ${activeTab === "cadastro"
+            ? "bg-yellow-400 text-gray-900"
+            : "bg-gray-800 text-yellow-400 hover:bg-yellow-600 hover:text-gray-100"
+            }`}
           onClick={() => setActiveTab("cadastro")}
           type="button"
         >
@@ -158,11 +171,10 @@ async function verificarEntrada() {
             />
             <input
               type="text"
-              maxLength={11}
-              placeholder="CPF (somente números)"
+              placeholder="CPF"
               className="w-full p-3 rounded bg-gray-700 placeholder-gray-400 text-white mb-3 focus:outline-yellow-400"
               value={cpf}
-              onChange={(e) => setCpf(e.target.value)}
+              onChange={(e) => setCpf(formatarCPF(e.target.value))}
             />
             <input
               type="date"
@@ -188,7 +200,7 @@ async function verificarEntrada() {
                 placeholder="CPF"
                 className="w-full p-3 rounded bg-gray-700 placeholder-gray-400 text-white mb-4 focus:outline-yellow-400"
                 value={cpfEntrada}
-                onChange={(e) => setCpfEntrada(e.target.value)}
+                onChange={(e) => setCpfEntrada(formatarCPF(e.target.value))}
               />
               <button
                 onClick={registrarEntrada}
@@ -205,7 +217,7 @@ async function verificarEntrada() {
                 placeholder="CPF"
                 className="w-full p-3 rounded bg-gray-700 placeholder-gray-400 text-white mb-4 focus:outline-yellow-400"
                 value={cpfVerificar}
-                onChange={(e) => setCpfVerificar(e.target.value)}
+                onChange={(e) => setCpfVerificar(formatarCPF(e.target.value))}
               />
               <button
                 onClick={verificarEntrada}
