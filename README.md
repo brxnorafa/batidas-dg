@@ -49,12 +49,21 @@ source src/public/init.sql
 
 
 ---
-🧠 Autores
-Softwave - Especializados em Software por Demanda
-(**Bruno Rafael (/brxnorafa)** & **Nicolas Marques**)
 
-📃 Licença
-Este projeto é de uso privado para o bar Batidas DG, mas o código pode servir como referência ou base para projetos similares.
+## 🧠 Autores
+
+**Softwave** — Especializados em Software por Demanda  
+Desenvolvido por:
+- [**Bruno Rafael** (@brxnorafa)](https://github.com/brxnorafa)
+- **Nicolas Marques**
+
+---
+
+## 📃 Licença
+
+Este projeto é de uso privado para o bar **Batidas DG**.  
+O código pode ser utilizado como referência ou base para projetos similares, desde que os devidos créditos sejam mantidos.
+
 ---
 
 
