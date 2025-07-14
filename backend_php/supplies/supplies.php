@@ -3,7 +3,8 @@ header('Content-Type: application/json');
 include '../config/conn.php';
 
 // Função helper pra pegar dados do PUT e DELETE
-function getInputData() {
+function getInputData()
+{
     $input = file_get_contents("php://input");
     return json_decode($input, true);
 }
@@ -37,7 +38,7 @@ if ($method === 'GET') {
     $action = $_GET['action'] ?? '';
     if ($action === 'listar') {
         try {
-            $stmt = $pdo->query("SELECT id, name, unit, total_quantity FROM supplies ORDER BY name ASC");
+            $stmt = $pdo->query("SELECT id, name, unit, total_quantity FROM supplies WHERE active = 1 ORDER BY name ASC");
             $insumos = $stmt->fetchAll(PDO::FETCH_ASSOC);
             echo json_encode(['success' => true, 'insumos' => $insumos]);
         } catch (Exception $e) {
@@ -78,7 +79,7 @@ if ($method === 'PUT') {
 }
 
 if ($method === 'DELETE') {
-    // Excluir insumo
+    // Desativar insumo (soft delete)
     parse_str($_SERVER['QUERY_STRING'], $query);
     $id = intval($query['id'] ?? 0);
     if (!$id) {
@@ -87,11 +88,11 @@ if ($method === 'DELETE') {
     }
 
     try {
-        $stmt = $pdo->prepare("DELETE FROM supplies WHERE id = ?");
+        $stmt = $pdo->prepare("UPDATE supplies SET active = 0 WHERE id = ?");
         $stmt->execute([$id]);
-        echo json_encode(['success' => true, 'message' => 'Insumo excluído com sucesso!']);
+        echo json_encode(['success' => true, 'message' => 'Insumo desativado com sucesso!']);
     } catch (Exception $e) {
-        echo json_encode(['success' => false, 'message' => 'Erro ao excluir insumo: ' . $e->getMessage()]);
+        echo json_encode(['success' => false, 'message' => 'Erro ao desativar insumo: ' . $e->getMessage()]);
     }
     exit;
 }

@@ -4,13 +4,15 @@ include '../config/conn.php'; // conecta PDO
 
 $method = $_SERVER['REQUEST_METHOD'];
 
-function resposta($success, $message, $data = []) {
+function resposta($success, $message, $data = [])
+{
     echo json_encode(array_merge(['success' => $success, 'message' => $message], $data));
     exit;
 }
 
 // Mapeamento dos tipos do front para os do banco
-function mapTipoMovimentacao(string $tipoFront): ?string {
+function mapTipoMovimentacao(string $tipoFront): ?string
+{
     $map = [
         'entrada' => 'purchase',
         'saida' => 'sale',
@@ -51,6 +53,19 @@ if ($method === 'GET') {
                 resposta(true, "Movimentações carregadas com sucesso.", ['movimentacoes' => $movimentacoes]);
             } catch (Exception $e) {
                 resposta(false, "Erro ao buscar movimentações: " . $e->getMessage());
+            }
+        } elseif ($action === 'estoque_negativo') {
+            try {
+                $sql = "SELECT id, name, unit, total_quantity AS quantity 
+                FROM supplies 
+                WHERE active = 1 AND total_quantity <= 20
+                ORDER BY name";
+                $stmt = $pdo->query($sql);
+                $estoqueCritico = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+                resposta(true, "Estoque crítico listado com sucesso.", ['estoque_critico' => $estoqueCritico]);
+            } catch (Exception $e) {
+                resposta(false, "Erro ao buscar estoque crítico: " . $e->getMessage());
             }
         } else {
             resposta(false, "Ação GET inválida.");

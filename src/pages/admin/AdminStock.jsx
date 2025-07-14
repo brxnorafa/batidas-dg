@@ -5,24 +5,29 @@ import autoTable from "jspdf-autotable";
 export default function AdminStock() {
   const [activeTab, setActiveTab] = useState("registrar");
 
+  const instanceId = "LITE-CPR8X2-C38SH4";
+  const apiToken = "CLCLsyIcyuJ6rYm18hL97kW9TzUbOOmO9";
+
+  const [whatsappNumber, setWhatsappNumber] = useState("5511945131320");
+  const [limiteEstoqueCritico, setLimiteEstoqueCritico] = useState(20);
+
   // Movimentação states
   const [insumos, setInsumos] = useState([]);
   const [selectedInsumo, setSelectedInsumo] = useState("");
   const [tipoMovimentacao, setTipoMovimentacao] = useState("entrada");
   const [quantidade, setQuantidade] = useState("");
   const [observacao, setObservacao] = useState("");
-  const [query, setQuery] = useState(""); // texto do input
+  const [query, setQuery] = useState("");
   const [filteredInsumos, setFilteredInsumos] = useState([]);
+  const [estoqueCritico, setEstoqueCritico] = useState([]);
   const autocompleteRef = useRef(null);
 
   const [filtroEstoque, setFiltroEstoque] = useState("");
-
   const [estoque, setEstoque] = useState([]);
 
   const estoqueFiltrado = estoque.filter((item) =>
     item.name.toLowerCase().includes(filtroEstoque.toLowerCase())
   );
-
 
   const buscarInsumos = async () => {
     try {
@@ -35,6 +40,54 @@ export default function AdminStock() {
       }
     } catch (err) {
       alert("Erro ao buscar insumos: " + err.message);
+    }
+  };
+
+  const buscarEstoqueCritico = async (limite = 20) => {
+    try {
+      const res = await fetch("/php/stock/stock.php?action=estoque_negativo");
+      const data = await res.json();
+      if (data.success) {
+        const criticos = data.estoque_critico.filter(
+          (item) => parseFloat(item.quantity) < limite
+        );
+        setEstoqueCritico(criticos);
+
+        if (criticos.length === 0) {
+          alert(`Nenhum insumo com estoque abaixo de ${limite}.`);
+        } else {
+          const lista = criticos
+            .map(
+              (item) =>
+                `- ${item.name} (${parseFloat(item.quantity).toFixed(1)} ${item.unit})`
+            )
+            .join("\n");
+
+          const mensagem = `⚠️ *Alerta de Estoque Crítico* ⚠️\n\nOs seguintes insumos estão com estoque abaixo de ${limite}:\n\n${lista}\n\nPor favor, providencie reposição.`;
+
+          await fetch(
+            `https://api.w-api.app/v1/message/send-text?instanceId=${instanceId}`,
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${apiToken}`,
+              },
+              body: JSON.stringify({
+                phone: whatsappNumber,
+                message: mensagem,
+                delayMessage: 5,
+              }),
+            }
+          );
+
+          alert("Mensagem de alerta enviada via WhatsApp!");
+        }
+      } else {
+        alert("Erro ao buscar estoque crítico: " + data.message);
+      }
+    } catch (err) {
+      alert("Erro ao buscar estoque crítico ou enviar mensagem: " + err.message);
     }
   };
 
@@ -64,7 +117,7 @@ export default function AdminStock() {
         body: JSON.stringify({
           action: "registrar",
           insumo_id: selectedInsumo,
-          tipo: tipoMovimentacao, // usa "entrada", "saida" ou "ajuste"
+          tipo: tipoMovimentacao,
           quantidade: parseFloat(quantidade),
           observacao,
         }),
@@ -106,18 +159,16 @@ export default function AdminStock() {
             ins.name.toLowerCase().includes(lowerQuery) ||
             ins.unit.toLowerCase().includes(lowerQuery)
         )
-        .slice(0, 10) // limita a 10 sugestões
+        .slice(0, 10)
     );
   }, [query, insumos]);
 
-  // Quando seleciona um insumo da lista
   const handleSelectInsumo = (insumo) => {
     setSelectedInsumo(insumo.id);
     setQuery(`${insumo.name} (${insumo.unit})`);
     setFilteredInsumos([]);
   };
 
-  // Fecha lista ao clicar fora
   useEffect(() => {
     const handleClickOutside = (e) => {
       if (autocompleteRef.current && !autocompleteRef.current.contains(e.target)) {
@@ -130,7 +181,6 @@ export default function AdminStock() {
 
   const gerarRelatorioPDF = async (insumoId, insumoName, estoqueAtual) => {
     try {
-      // Busca as movimentações daquele insumo
       const res = await fetch(`/php/stock/stock.php?action=movimentacoes&insumo_id=${insumoId}`);
       const data = await res.json();
 
@@ -140,21 +190,17 @@ export default function AdminStock() {
       }
 
       const movimentacoes = data.movimentacoes;
-
       const doc = new jsPDF();
 
-      // Título
       doc.setFontSize(18);
-      doc.setTextColor("#6b21a8"); // roxo bonito
+      doc.setTextColor("#6b21a8");
       doc.text(`Relatório de Estoque - ${insumoName}`, 14, 20);
 
-      // Estoque atual e data
       doc.setFontSize(12);
       doc.setTextColor("#000");
       doc.text(`Estoque Atual: ${parseFloat(estoqueAtual).toFixed(3)}`, 14, 30);
       doc.text(`Data do Relatório: ${new Date().toLocaleDateString()}`, 14, 37);
 
-      // Dados pra tabela
       const tableColumn = ["Tipo", "Quantidade", "Observação", "Data"];
       const tableRows = movimentacoes.map((mov) => [
         mov.movement_type.charAt(0).toUpperCase() + mov.movement_type.slice(1),
@@ -183,13 +229,12 @@ export default function AdminStock() {
     <div className="min-h-screen bg-gray-900 p-5 flex flex-col items-center">
       <h1 className="text-3xl font-bold text-white mb-6">Gestão de Estoque</h1>
 
-      {/* Tabs */}
       <div className="flex w-full max-w-5xl mb-6 rounded-lg overflow-hidden border border-purple-500">
         <button
           onClick={() => setActiveTab("registrar")}
           className={`flex-1 py-3 font-semibold text-center transition ${activeTab === "registrar"
-              ? "bg-purple-500 text-white"
-              : "bg-gray-800 text-purple-400 hover:bg-purple-600 hover:text-white"
+            ? "bg-purple-500 text-white"
+            : "bg-gray-800 text-purple-400 hover:bg-purple-600 hover:text-white"
             }`}
         >
           Registrar Movimentação
@@ -197,15 +242,14 @@ export default function AdminStock() {
         <button
           onClick={() => setActiveTab("estoque")}
           className={`flex-1 py-3 font-semibold text-center transition ${activeTab === "estoque"
-              ? "bg-purple-500 text-white"
-              : "bg-gray-800 text-purple-400 hover:bg-purple-600 hover:text-white"
+            ? "bg-purple-500 text-white"
+            : "bg-gray-800 text-purple-400 hover:bg-purple-600 hover:text-white"
             }`}
         >
           Estoque Atual
         </button>
       </div>
 
-      {/* Conteúdo */}
       <div className="w-full max-w-5xl">
         {activeTab === "registrar" && (
           <div className="bg-gray-800 rounded-lg p-6 shadow-lg space-y-4">
@@ -275,53 +319,96 @@ export default function AdminStock() {
         )}
 
         {activeTab === "estoque" && (
-          <div className="bg-gray-800 rounded-lg shadow-lg p-4">
-            <input
-              type="text"
-              placeholder="Filtrar estoque pelo nome"
-              value={filtroEstoque}
-              onChange={(e) => setFiltroEstoque(e.target.value)}
-              className="w-full mb-4 p-3 rounded bg-gray-700 text-white"
-            />
+          <>
+            {/* Bolha flutuante de configuração do alerta */}
+            <div className="relative z-10 -mb-10 w-full max-w-5xl">
+              <div className="bg-gray-700 border border-purple-500 rounded-xl shadow-2xl p-6 flex flex-col sm:flex-row sm:items-end sm:justify-between gap-6">
+                <div className="flex flex-col">
+                  <label className="text-white mb-1">Limite do Estoque Crítico</label>
+                  <input
+                    type="number"
+                    value={limiteEstoqueCritico}
+                    onChange={(e) => setLimiteEstoqueCritico(parseInt(e.target.value) || 0)}
+                    className="w-28 p-2 rounded bg-gray-800 text-white border border-purple-500"
+                    min={0}
+                    step={1}
+                  />
+                </div>
 
-            <div className="overflow-x-auto">
-              <table className="min-w-full text-white">
-                <thead>
-                  <tr className="bg-gray-700 text-purple-400">
-                    <th className="px-4 py-3 text-left">Nome</th>
-                    <th className="px-4 py-3 text-left">Unidade</th>
-                    <th className="px-4 py-3 text-left">Quantidade em Estoque</th>
-                    <th className="px-4 py-3 text-left">Ação</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {estoqueFiltrado.length === 0 ? (
-                    <tr>
-                      <td colSpan="4" className="text-center py-5 text-purple-300">
-                        Nenhum insumo encontrado.
-                      </td>
+                <div className="flex flex-col flex-1">
+                  <label className="text-white mb-1">Número do WhatsApp</label>
+                  <input
+                    type="text"
+                    value={whatsappNumber}
+                    onChange={(e) => setWhatsappNumber(e.target.value)}
+                    placeholder="Ex: 5511999999999"
+                    className="p-2 rounded bg-gray-800 text-white border border-purple-500 w-full"
+                  />
+                </div>
+
+                <div className="flex items-end">
+                  <button
+                    onClick={() => buscarEstoqueCritico(limiteEstoqueCritico)}
+                    className="bg-red-600 hover:bg-red-700 text-white py-2 px-4 rounded font-semibold h-10"
+                  >
+                    Notificar Estoque Crítico
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Card principal do estoque */}
+            <div className="bg-gray-800 rounded-lg shadow-lg p-6 pt-12 mt-16 relative z-0">
+              <div className="mb-4">
+                <label className="text-white mb-1 block">Filtrar pelo nome do insumo</label>
+                <input
+                  type="text"
+                  placeholder="Digite o nome"
+                  value={filtroEstoque}
+                  onChange={(e) => setFiltroEstoque(e.target.value)}
+                  className="w-full p-3 rounded bg-gray-700 text-white border border-purple-500"
+                />
+              </div>
+
+              <div className="overflow-x-auto">
+                <table className="min-w-full text-white">
+                  <thead>
+                    <tr className="bg-gray-700 text-purple-400">
+                      <th className="px-4 py-3 text-left">Nome</th>
+                      <th className="px-4 py-3 text-left">Unidade</th>
+                      <th className="px-4 py-3 text-left">Quantidade em Estoque</th>
+                      <th className="px-4 py-3 text-left">Ação</th>
                     </tr>
-                  ) : (
-                    estoqueFiltrado.map((item) => (
-                      <tr key={item.id} className="border-t border-gray-700">
-                        <td className="px-4 py-3">{item.name}</td>
-                        <td className="px-4 py-3">{item.unit}</td>
-                        <td className="px-4 py-3">{parseFloat(item.quantity).toFixed(3)}</td>
-                        <td className="px-4 py-3">
-                          <button
-                            onClick={() => gerarRelatorioPDF(item.id, item.name, item.quantity)}
-                            className="bg-purple-500 hover:bg-purple-600 text-white py-1 px-3 rounded font-semibold"
-                          >
-                            Relatório
-                          </button>
+                  </thead>
+                  <tbody>
+                    {estoqueFiltrado.length === 0 ? (
+                      <tr>
+                        <td colSpan="4" className="text-center py-5 text-purple-300">
+                          Nenhum insumo encontrado.
                         </td>
                       </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+                    ) : (
+                      estoqueFiltrado.map((item) => (
+                        <tr key={item.id} className="border-t border-gray-700">
+                          <td className="px-4 py-3">{item.name}</td>
+                          <td className="px-4 py-3">{item.unit}</td>
+                          <td className="px-4 py-3">{parseFloat(item.quantity).toFixed(3)}</td>
+                          <td className="px-4 py-3">
+                            <button
+                              onClick={() => gerarRelatorioPDF(item.id, item.name, item.quantity)}
+                              className="bg-purple-500 hover:bg-purple-600 text-white py-1 px-3 rounded font-semibold"
+                            >
+                              Relatório
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
             </div>
-          </div>
+          </>
         )}
       </div>
     </div>
