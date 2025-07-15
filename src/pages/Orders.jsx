@@ -418,41 +418,6 @@ export default function Orders() {
                           <span className="text-white flex-1">
                             {insumo.name} ({insumo.unit})
                           </span>
-                          {selecionado && (
-                            <>
-                              <button
-                                className="bg-purple-600 hover:bg-purple-700 text-white rounded px-2"
-                                onClick={() =>
-                                  ajustarQuantidadeOpcional(produto.id, insumo.id, -1)
-                                }
-                                type="button"
-                              >
-                                -
-                              </button>
-                              <input
-                                type="number"
-                                className="bg-gray-700 text-white w-16 p-1 rounded text-center"
-                                value={quantidadeOpcional}
-                                onChange={(e) =>
-                                  mudarQuantidadeOpcional(
-                                    produto.id,
-                                    insumo.id,
-                                    Number(e.target.value)
-                                  )
-                                }
-                                min={1}
-                              />
-                              <button
-                                className="bg-purple-600 hover:bg-purple-700 text-white rounded px-2"
-                                onClick={() =>
-                                  ajustarQuantidadeOpcional(produto.id, insumo.id, +1)
-                                }
-                                type="button"
-                              >
-                                +
-                              </button>
-                            </>
-                          )}
                         </label>
                       );
                     })}
